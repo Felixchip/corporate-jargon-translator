@@ -1,24 +1,20 @@
 {
   "manifest_version": 3,
   "name": "Corporate Jargon Translator",
-  "version": "1.0.0",
-  "description": "Translates corporate jargon into brutally honest, sarcastic translations in real-time during calls.",
+  "version": "2.0.0",
+  "description": "Floating jargon translator that watches your meetings.",
 
   "permissions": [
-    "sidePanel",
-    "storage"
+    "storage",
+    "offscreen"
   ],
 
   "host_permissions": [
-    "https://api.anthropic.com/*"
+    "https://corporate-jargon-translator-production.up.railway.app/*"
   ],
 
   "background": {
     "service_worker": "service-worker.js"
-  },
-
-  "side_panel": {
-    "default_path": "sidepanel/sidepanel.html"
   },
 
   "action": {
@@ -30,10 +26,12 @@
     }
   },
 
-  "web_accessible_resources": [
+  "content_scripts": [
     {
-      "resources": ["permission/permission.html"],
-      "matches": ["<all_urls>"]
+      "matches": ["<all_urls>"],
+      "js": ["content/content.js"],
+      "css": ["content/content.css"],
+      "run_at": "document_idle"
     }
   ],
 
