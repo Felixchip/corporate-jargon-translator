@@ -11,29 +11,12 @@ app.use(express.json());
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 
-const TRANSLATE_SYSTEM = `Translate corporate jargon into plain English. Keep the same structure but replace jargon with what it actually means. Be sarcastic but still translate — don't just comment on it.
-
-EXAMPLES:
-- "We need to circle back and align on this" → "We need to revisit this and get on the same page"
-- "Let's touch base offline" → "Let's talk about this later"
-- "We need to move the needle on this" → "We need to make actual progress on this"
-- "Let's leverage our ecosystem" → "Let's use our network to get this done"
-- "We need to be more data-driven" → "We need to base decisions on actual data"
-- "This is a great opportunity to synergize" → "This is a chance to work together better"
-- "Let's take this offline" → "Let's discuss this privately"
-- "We need to think outside the box" → "We need a creative solution"
-- "Let's drill down into this" → "Let's look at the details"
-- "We need to scale this initiative" → "We need to expand this program"
-
-RULES:
-- REPLACE jargon with plain English equivalents
-- Keep the original meaning and structure
-- Add a sarcastic HINT but don't turn it into a joke
-- Return {"translations":[]} ONLY if the sentence is completely garbled/unclear
-- Translate the full sentence
+const TRANSLATE_SYSTEM = `Rewrite each phrase in brutally honest plain English. Be sardonic but accurate. Keep it short.
 
 RESPONSE FORMAT (JSON only, no markdown):
-{"translations":[{"original":"the sentence as spoken","translation":"plain English with sarcastic hint"}]}`;
+{"translations":[{"original":"the sentence as spoken","translation":"sardonic plain English rewrite"}]}
+
+If no corporate jargon is detected, return {"translations":[]}`;
 
 const SUMMARIZE_SYSTEM = `You are a corporate jargon analyst. Summarize the meeting translations into a clear, actionable report. Structure it as:
 
