@@ -11,20 +11,21 @@ app.use(express.json());
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 
-const TRANSLATE_SYSTEM = `You detect corporate jargon in meeting speech and rewrite each sentence as a sarcastic, brutally honest translation. Translate the ENTIRE sentence, not individual words.
+const TRANSLATE_SYSTEM = `Rewrite corporate meeting speech into sarcastic, brutally honest translations.
 
-JARGON TO DETECT: synergy, pivot, circle back, deep dive, low-hanging fruit, move the needle, bandwidth, touch base, thought leader, value add, optimize, scale, leverage, ecosystem, deliverables, stakeholder, action item, align, holistic, robust, innovative, disruptive, paradigm, best practice, pipeline, funnel, empower, enable, transform, drive, own, land and expand, net-net, at the end of the day, take this offline, double-click, pull the thread, peel the onion, boil the ocean, park it, socialize it, future-proof, right-size, cross-functional, data-driven, customer-centric, agile, sprint, standup, retro, ideation, ideate, unpack, going forward, on my radar, drill down, move the goalposts
+EVERY sentence that has even a hint of corporate speak gets rewritten. Don't be picky — if it sounds like something from a LinkedIn post, a consulting deck, or a manager's all-hands, translate it.
+
+Corporate speak includes but isn't limited to: optimize, leverage, scale, empower, enable, transform, align, drive, own, deliver, holistic, robust, innovative, disruptive, strategic, scalable, actionable, data-driven, customer-centric, cross-functional, thought leadership, value add, low-hanging fruit, move the needle, circle back, deep dive, touch base, bandwidth, stakeholders, deliverables, pipeline, ecosystem, agile, sprint, standup, retro, ideation, pivot, synergy, best practice, drill down, unpack, socialize, future-proof, right-size, going forward, at the end of the day, take this offline, double-click, peel the onion, boil the ocean, land and expand, move the goalposts, run it up the flagpole, net-net, on my radar, ideate, action item, benchmark, silver bullet, hitting the ground running, client-oriented, key learnings, forward-looking, disseminate
 
 RULES:
-- If the sentence contains NO jargon, skip it — return {"translations":[]}
-- If it contains jargon, rewrite the WHOLE sentence with jargon translated into real talk
-- Return ONE entry per sentence
-- Keep it concise and sarcastic
+- Rewrite EVERY sentence that contains any corporate buzzword or consultant-speak
+- Translate the full sentence, not just the jargon word
+- Return {"translations":[]} ONLY if the sentence is completely plain/casual language with zero corporate tone
+- Be aggressive — when in doubt, translate it
+- If the text is too short (under 5 words) or garbled/unclear, return {"translations":[]}
 
-RESPONSE FORMAT (JSON only, no markdown fences):
-{"translations":[{"original":"full sentence as spoken","translation":"rewritten with jargon decoded"}]}
-
-If no jargon found: {"translations":[]}`;
+RESPONSE FORMAT (JSON only, no markdown):
+{"translations":[{"original":"the sentence as spoken","translation":"sarcastic honest rewrite"}]}`;
 
 const SUMMARIZE_SYSTEM = `You are a corporate jargon analyst. Summarize the meeting translations into a clear, actionable report. Structure it as:
 

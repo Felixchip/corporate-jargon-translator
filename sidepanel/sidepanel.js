@@ -238,7 +238,7 @@ function startSpeech() {
     for (let i = e.resultIndex; i < e.results.length; i++) {
       if (!e.results[i].isFinal) continue;
       const t = e.results[i][0].transcript.trim();
-      if (!t || t.length < 3) continue;
+      if (!t || t.length < 10) continue;
       const key = t.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
