@@ -117,7 +117,16 @@ function setListeningUI(listening) {
 function handleListenClick() {
   if (isListening) {
     if (rec) { rec.onend = null; try { rec.stop(); } catch(e){} }
-    queue.length = 0;
+    // Flush any remaining batch before stopping
+    if (batch.length > 0) {
+      const toSend = [...batch]
+      batch = []
+      clearTimeout(debounceTimer)
+      clearTimeout(maxWaitTimer)
+      debounceTimer = null
+      maxWaitTimer = null
+      processBatch(toSend)
+    }
     processing = false;
     setListeningUI(false);
     controls.style.display = 'flex';
@@ -203,25 +212,58 @@ async function translateText(text) {
   }
 }
 
-// --- QUEUE ---
-const queue = [];
-let processing = false;
+// --- CHUNKING ---
+const MAX_WAIT = 2000
+const BATCH_PAUSE = 800
 
-async function processQueue() {
-  if (processing) return;
-  processing = true;
-  while (queue.length > 0) {
-    const text = queue.shift();
-    setStatus('translating', 'Translating...');
-    const r = await translateText(text);
-    console.log('[TRANSLATE]', text, '→', r);
-    if (r.error) showError(r.error);
-    else if (r.translations?.length > 0) {
-      r.translations.forEach(t => {
-        if (!t || !t.original || !t.translation) return;
-        addTranslation(t.original, t.translation);
-      });
-    }
+let batch = []
+let debounceTimer = null
+let maxWaitTimer = null
+let processing = false
+
+function onJargonHit(phrase) {
+  batch.push(phrase)
+
+  if (!maxWaitTimer) {
+    maxWaitTimer = setTimeout(flush, MAX_WAIT)
+  }
+
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(flush, BATCH_PAUSE)
+}
+
+function flush() {
+  if (!batch.length) return
+  clearTimeout(debounceTimer)
+  clearTimeout(maxWaitTimer)
+  debounceTimer = null
+  maxWaitTimer = null
+
+  const toSend = [...batch]
+  batch = []
+  processBatch(toSend)
+}
+
+async function processBatch(sentences) {
+  if (processing) return
+  processing = true
+
+  const combined = sentences.join('. ')
+  setStatus('translating', 'Translating...')
+  const r = await translateText(combined)
+  console.log('[TRANSLATE]', combined, '→', r)
+
+  if (r.error) showError(r.error)
+  else if (r.translations?.length > 0) {
+    r.translations.forEach(t => {
+      if (!t || !t.original || !t.translation) return
+      addTranslation(t.original, t.translation)
+    })
+  }
+
+  processing = false
+  if (isListening) setStatus('active', 'Listening...')
+}
   }
   processing = false;
   if (isListening) setStatus('active', 'Listening...');
@@ -252,8 +294,7 @@ function startSpeech() {
         const first = seen.values().next().value;
         seen.delete(first);
       }
-      queue.push(t);
-      processQueue();
+      onJargonHit(t);
     }
   };
 
