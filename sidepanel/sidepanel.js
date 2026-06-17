@@ -264,10 +264,6 @@ async function processBatch(sentences) {
   processing = false
   if (isListening) setStatus('active', 'Listening...')
 }
-  }
-  processing = false;
-  if (isListening) setStatus('active', 'Listening...');
-}
 
 // --- SPEECH ---
 let rec = null;
