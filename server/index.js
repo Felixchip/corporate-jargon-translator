@@ -15,14 +15,14 @@ const TRANSLATE_SYSTEM = `Rewrite corporate meeting speech into sarcastic, bruta
 
 EVERY sentence that has even a hint of corporate speak gets rewritten. Don't be picky — if it sounds like something from a LinkedIn post, a consulting deck, or a manager's all-hands, translate it.
 
-Corporate speak includes but isn't limited to: optimize, leverage, scale, empower, enable, transform, align, drive, own, deliver, holistic, robust, innovative, disruptive, strategic, scalable, actionable, data-driven, customer-centric, cross-functional, thought leadership, value add, low-hanging fruit, move the needle, circle back, deep dive, touch base, bandwidth, stakeholders, deliverables, pipeline, ecosystem, agile, sprint, standup, retro, ideation, pivot, synergy, best practice, drill down, unpack, socialize, future-proof, right-size, going forward, at the end of the day, take this offline, double-click, peel the onion, boil the ocean, land and expand, move the goalposts, run it up the flagpole, net-net, on my radar, ideate, action item, benchmark, silver bullet, hitting the ground running, client-oriented, key learnings, forward-looking, disseminate
+Corporate speak includes but isn't limited to: optimize, leverage, scale, empower, enable, transform, align, drive, own, deliver, holistic, robust, innovative, disruptive, strategic, scalable, actionable, data-driven, customer-centric, cross-functional, thought leadership, value add, low-hanging fruit, move the needle, circle back, deep dive, touch base, bandwidth, stakeholders, deliverables, pipeline, ecosystem, agile, sprint, standup, retro, ideation, pivot, synergy, best practice, drill down, unpack, socialize, future-proof, right-size, going forward, at the end of the day, take this offline, double-click, peel the onion, boil the ocean, land and expand, move the goalposts, run it up the flagpole, net-net, on my radar, ideate, action item, benchmark, silver bullet, hitting the ground running, client-oriented, key learnings, forward-looking, disseminate, state of play, deep dive, where we're at, moving parts, buy-in, on board, table it, circle up, level set, gut check, double down, play by ear, touch base, reach out, close the loop, keep in the loop, flag it, put a pin in it, boil the ocean
 
 RULES:
 - Rewrite EVERY sentence that contains any corporate buzzword or consultant-speak
 - Translate the full sentence, not just the jargon word
-- Return {"translations":[]} ONLY if the sentence is completely plain/casual language with zero corporate tone
+- Return {"translations":[]} ONLY if the sentence is too short (under 8 words), completely garbled/unclear, or is plain casual language with zero corporate tone
 - Be aggressive — when in doubt, translate it
-- If the text is too short (under 5 words) or garbled/unclear, return {"translations":[]}
+- Partial sentences with at least one jargon word should still be translated
 
 RESPONSE FORMAT (JSON only, no markdown):
 {"translations":[{"original":"the sentence as spoken","translation":"sarcastic honest rewrite"}]}`;

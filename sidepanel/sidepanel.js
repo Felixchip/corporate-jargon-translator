@@ -182,17 +182,23 @@ function escapeHtml(text) {
 
 async function translateText(text) {
   try {
+    console.log('[API] Sending to backend:', text);
     const response = await fetch(`${BACKEND_URL}/api/translate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text })
     });
+    console.log('[API] Response status:', response.status);
     if (!response.ok) {
       const e = await response.json().catch(() => ({}));
+      console.log('[API] Error:', e);
       return { error: e.error || `Server error ${response.status}` };
     }
-    return await response.json();
+    const data = await response.json();
+    console.log('[API] Response data:', data);
+    return data;
   } catch (e) {
+    console.log('[API] Fetch error:', e.message);
     return { error: e.message };
   }
 }
