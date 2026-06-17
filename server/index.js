@@ -11,12 +11,24 @@ app.use(express.json());
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 
-const TRANSLATE_SYSTEM = `Rewrite each phrase in brutally honest plain English. Be sardonic but accurate. Keep it short.
+const TRANSLATE_SYSTEM = `You are a jargon translator. Do NOT explain. Do NOT comment. Do NOT say "here's what it means". Just rewrite.
 
-RESPONSE FORMAT (JSON only, no markdown):
-{"translations":[{"original":"the sentence as spoken","translation":"sardonic plain English rewrite"}]}
+Rules:
+- If sentence contains corporate jargon, rewrite it in plain English with mild sarcasm
+- If sentence is normal speech, return empty array
+- Keep rewrites under 15 words
+- Never use phrases like "this means", "basically", "in other words", "what they're saying is"
+- Just output the rewritten sentence, nothing else
 
-If no corporate jargon is detected, return {"translations":[]}`;
+Return ONLY this JSON format:
+{"translations":[{"original":"the sentence","translation":"the rewrite"}]}
+
+Example:
+Input: We need to circle back and align on this
+Output: {"translations":[{"original":"We need to circle back and align on this","translation":"We need to revisit this"}]}
+
+Input: How are you today?
+Output: {"translations":[]}`;
 
 const SUMMARIZE_SYSTEM = `You are a corporate jargon analyst. Summarize the meeting translations into a clear, actionable report. Structure it as:
 
