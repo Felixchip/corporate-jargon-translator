@@ -117,17 +117,6 @@ function setListeningUI(listening) {
 function handleListenClick() {
   if (isListening) {
     if (rec) { rec.onend = null; try { rec.stop(); } catch(e){} }
-    // Flush any remaining batch before stopping
-    if (batch.length > 0) {
-      const toSend = [...batch]
-      batch = []
-      clearTimeout(debounceTimer)
-      clearTimeout(maxWaitTimer)
-      debounceTimer = null
-      maxWaitTimer = null
-      processBatch(toSend)
-    }
-    processing = false;
     setListeningUI(false);
     controls.style.display = 'flex';
     const hasCards = translationsList.querySelectorAll('.translation-card').length > 0;
@@ -212,46 +201,11 @@ async function translateText(text) {
   }
 }
 
-// --- CHUNKING ---
-const MAX_WAIT = 2000
-const BATCH_PAUSE = 800
-
-let batch = []
-let debounceTimer = null
-let maxWaitTimer = null
-let processing = false
-
-function onJargonHit(phrase) {
-  batch.push(phrase)
-
-  if (!maxWaitTimer) {
-    maxWaitTimer = setTimeout(flush, MAX_WAIT)
-  }
-
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(flush, BATCH_PAUSE)
-}
-
-function flush() {
-  if (!batch.length) return
-  clearTimeout(debounceTimer)
-  clearTimeout(maxWaitTimer)
-  debounceTimer = null
-  maxWaitTimer = null
-
-  const toSend = [...batch]
-  batch = []
-  processBatch(toSend)
-}
-
-async function processBatch(sentences) {
-  if (processing) return
-  processing = true
-
-  const combined = sentences.join('. ')
+// --- TRANSLATE ---
+async function translateAndDisplay(text) {
   setStatus('translating', 'Translating...')
-  const r = await translateText(combined)
-  console.log('[TRANSLATE]', combined, '→', r)
+  const r = await translateText(text)
+  console.log('[TRANSLATE]', text, '→', r)
 
   if (r.error) showError(r.error)
   else if (r.translations?.length > 0) {
@@ -261,7 +215,6 @@ async function processBatch(sentences) {
     })
   }
 
-  processing = false
   if (isListening) setStatus('active', 'Listening...')
 }
 
@@ -290,7 +243,7 @@ function startSpeech() {
         const first = seen.values().next().value;
         seen.delete(first);
       }
-      onJargonHit(t);
+      translateAndDisplay(t);
     }
   };
 
