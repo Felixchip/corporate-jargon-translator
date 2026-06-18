@@ -11,6 +11,7 @@ if (!window._jargonInitialised) {
   window._jargonPrevText   = '';
   window._jargonBuffer     = '';  // accumulates committed chunks between silence gaps
   window._jargonTimer      = null;
+  window._jargonStartIndex = 0;
 
   // ─── UI ────────────────────────────────────────────────────────────────
 
@@ -134,6 +135,7 @@ if (!window._jargonInitialised) {
     window._jargonPrevLength = 0;
     window._jargonPrevText   = '';
     window._jargonBuffer     = '';
+    window._jargonStartIndex = 0;
     clearTimeout(window._jargonTimer);
 
     // Always tear down any previous instance before creating a new one.
@@ -157,9 +159,14 @@ if (!window._jargonInitialised) {
     rec.lang           = 'en-US';
 
     rec.onresult = (e) => {
-      // Build the full current interim transcript from all results in the list
+      // Self-heal if the browser reset the results list
+      if (window._jargonStartIndex >= e.results.length) {
+        window._jargonStartIndex = 0;
+      }
+
+      // Build the current sentence transcript from the start index
       let currentText = '';
-      for (let i = 0; i < e.results.length; i++) {
+      for (let i = window._jargonStartIndex; i < e.results.length; i++) {
         currentText += e.results[i][0].transcript;
       }
       currentText = currentText.trim();
@@ -181,7 +188,9 @@ if (!window._jargonInitialised) {
         if (sentence && window._jargonListening) {
           console.log(`[Jargon] Silence (${timeoutMs}ms) — flushing sentence:`, sentence);
           translateAndShow(sentence);
-          startSpeech(); // Restart to clear history
+          // Set start index for next sentence to the current results length
+          window._jargonStartIndex = e.results.length;
+          window._jargonBuffer = '';
         }
       }, timeoutMs);
     };
@@ -223,6 +232,7 @@ if (!window._jargonInitialised) {
     window._jargonPrevText   = '';
     window._jargonPrevLength = 0;
     window._jargonBuffer     = '';
+    window._jargonStartIndex = 0;
   }
 
   // ─── Toast ────────────────────────────────────────────────────────────────
