@@ -164,29 +164,18 @@ if (!window._jargonInitialised) {
       }
       currentText = currentText.trim();
 
-      // On YouTube, Chrome never emits isFinal:true.
-      // Instead it silently commits by SHRINKING the list (2→1).
-      // When we detect a shrink, accumulate the previous text into our sentence buffer
-      // rather than translating immediately — we want full sentences, not word fragments.
-      if (e.results.length < window._jargonPrevLength && window._jargonPrevText) {
-        window._jargonBuffer = (window._jargonBuffer + ' ' + window._jargonPrevText).trim();
-        console.log('[Jargon] Chunk committed, buffer now:', window._jargonBuffer);
-        window._jargonPrevText = '';
-      }
+      window._jargonBuffer = currentText;
 
-      window._jargonPrevLength = e.results.length;
-      window._jargonPrevText   = currentText;
-
-      // Silence timer: after 2s of no new speech, flush the buffer + any
-      // remaining interim text as one complete sentence to the API.
+      // Silence timer: after 2s of no new speech, flush the cumulative sentence to the API.
+      // We then restart speech recognition to clear Chrome's internal cumulative results buffer
+      // and start the next sentence with a clean slate.
       clearTimeout(window._jargonTimer);
       window._jargonTimer = setTimeout(() => {
-        const sentence = (window._jargonBuffer + ' ' + window._jargonPrevText).trim();
+        const sentence = window._jargonBuffer.trim();
         if (sentence && window._jargonListening) {
           console.log('[Jargon] Silence — flushing sentence:', sentence);
           translateAndShow(sentence);
-          window._jargonBuffer   = '';
-          window._jargonPrevText = '';
+          startSpeech(); // Restart to clear history
         }
       }, 2000);
     };
