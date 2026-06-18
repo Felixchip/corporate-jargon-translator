@@ -53,6 +53,7 @@ if (!window._jargonInitialised) {
       startSpeech();
     } else {
       stopSpeech();
+      window._jargonSeen.clear();
     }
   }
 
@@ -130,45 +131,45 @@ if (!window._jargonInitialised) {
     rec.lang           = 'en-US';
 
     rec.onresult = (e) => {
-      let finalText = '';
-      let latestInterim = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const transcript = e.results[i][0].transcript;
-        if (e.results[i].isFinal) {
-          finalText += transcript;
-        } else {
-          latestInterim = transcript;
-        }
+      let accumulated = '';
+      for (let i = 0; i < e.results.length; i++) {
+        accumulated += e.results[i][0].transcript;
       }
-      if (finalText) {
-        clearTimeout(window._jargonTimer);
-        window._jargonPending = '';
-        translateAndShow(finalText);
-      } else if (latestInterim) {
-        window._jargonPending = latestInterim;
-        clearTimeout(window._jargonTimer);
-        window._jargonTimer = setTimeout(() => {
-          if (window._jargonPending && window._jargonListening) {
-            translateAndShow(window._jargonPending);
-            window._jargonPending = '';
+      
+      window._jargonPending = accumulated;
+      console.log('[Jargon] Interim accumulated text:', window._jargonPending);
+
+      // Reset the silence timer on any speech input
+      clearTimeout(window._jargonTimer);
+      window._jargonTimer = setTimeout(() => {
+        if (window._jargonPending && window._jargonListening) {
+          const textToSend = window._jargonPending;
+          window._jargonPending = '';
+          
+          console.log('[Jargon] Silence detected. Translating full sentence:', textToSend);
+          
+          // Temporarily stop recognition to clear the browser's speech buffer
+          stopSpeech();
+          
+          // Send for translation
+          translateAndShow(textToSend);
+          
+          // Restart recognition fresh
+          if (window._jargonListening) {
+            startSpeech();
           }
-        }, SILENCE_DELAY);
-      }
+        }
+      }, SILENCE_DELAY);
     };
 
     rec.onerror = (e) => {
       console.warn('[Jargon] SpeechRecognition error:', e.error);
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-        // Mic permission denied — give up and reset the button
         window._jargonListening = false;
         updateButtonUI();
       }
-      // All other errors (no-speech, aborted, network, audio-capture) are
-      // non-fatal. onend fires right after and will start a fresh instance.
     };
 
-    // IMPORTANT: never call rec.start() on the same instance after onend —
-    // it silently fails on Chromium. Always call startSpeech() for a fresh object.
     rec.onend = () => {
       console.log('[Jargon] onend — still listening:', window._jargonListening);
       if (window._jargonListening) {
@@ -196,7 +197,6 @@ if (!window._jargonInitialised) {
     }
     clearTimeout(window._jargonTimer);
     window._jargonPending = '';
-    window._jargonSeen.clear();
   }
 
   // ─── Toast ────────────────────────────────────────────────────────────────
