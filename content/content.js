@@ -34,7 +34,7 @@ if (!window._jargonInitialised) {
       <svg class="jargon-stop" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:none">
         <rect x="6" y="6" width="12" height="12" rx="2"/>
       </svg>
-      <span class="jargon-btn-label">Start Listening</span>
+      <span class="jargon-btn-label">Start Translating</span>
     `;
     btn.addEventListener('click', toggleListening);
     document.body.appendChild(btn);
@@ -75,7 +75,7 @@ if (!window._jargonInitialised) {
       btn.classList.remove('listening');
       mic.style.display  = 'block';
       stop.style.display = 'none';
-      label.textContent  = 'Start Listening';
+      label.textContent  = 'Start Translating';
     }
   }
 
