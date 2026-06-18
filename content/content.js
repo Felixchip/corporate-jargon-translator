@@ -248,7 +248,8 @@ if (!window._jargonInitialised) {
     const toast = document.createElement('div');
     toast.className = 'jargon-toast';
     toast.innerHTML = `
-      <div class="jargon-toast-original">${escapeHtml(original)}</div>
+      <div class="jargon-toast-badge">Jargon Detected</div>
+      <div class="jargon-toast-original">“${escapeHtml(original)}”</div>
       <div class="jargon-toast-translation">${escapeHtml(translation)}</div>
     `;
     container.appendChild(toast);
