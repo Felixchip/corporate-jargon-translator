@@ -5,10 +5,11 @@ if (!window._jargonInitialised) {
   window._jargonInitialised = true;
 
   window._jargonListening = false;
-  window._jargonRec      = null;
-  window._jargonSeen     = new Set();
+  window._jargonRec        = null;
+  window._jargonSeen       = new Set();
   window._jargonPrevLength = 0;
   window._jargonPrevText   = '';
+  window._jargonBuffer     = '';  // accumulates committed chunks between silence gaps
   window._jargonTimer      = null;
 
   // ─── UI ────────────────────────────────────────────────────────────────
@@ -130,6 +131,7 @@ if (!window._jargonInitialised) {
     // Reset session state
     window._jargonPrevLength = 0;
     window._jargonPrevText   = '';
+    window._jargonBuffer     = '';
     clearTimeout(window._jargonTimer);
 
     // Always tear down any previous instance before creating a new one.
@@ -153,36 +155,38 @@ if (!window._jargonInitialised) {
     rec.lang           = 'en-US';
 
     rec.onresult = (e) => {
-      // Build the full current interim transcript
+      // Build the full current interim transcript from all results in the list
       let currentText = '';
       for (let i = 0; i < e.results.length; i++) {
         currentText += e.results[i][0].transcript;
       }
       currentText = currentText.trim();
 
-      console.log('[Jargon] onresult. Length:', e.results.length, '| Text:', currentText);
-
-      // KEY INSIGHT: On YouTube, Chrome never emits isFinal:true.
-      // Instead it silently commits results by SHRINKING the list (e.g. 2→1).
-      // When we detect a shrink, the _previous_ (longer) text was committed — translate it.
+      // On YouTube, Chrome never emits isFinal:true.
+      // Instead it silently commits by SHRINKING the list (2→1).
+      // When we detect a shrink, accumulate the previous text into our sentence buffer
+      // rather than translating immediately — we want full sentences, not word fragments.
       if (e.results.length < window._jargonPrevLength && window._jargonPrevText) {
-        console.log('[Jargon] List shrunk — Chrome committed:', window._jargonPrevText);
-        translateAndShow(window._jargonPrevText);
+        window._jargonBuffer = (window._jargonBuffer + ' ' + window._jargonPrevText).trim();
+        console.log('[Jargon] Chunk committed, buffer now:', window._jargonBuffer);
         window._jargonPrevText = '';
       }
 
       window._jargonPrevLength = e.results.length;
       window._jargonPrevText   = currentText;
 
-      // Silence timer: catches the final chunk before the user stops talking
+      // Silence timer: after 2s of no new speech, flush the buffer + any
+      // remaining interim text as one complete sentence to the API.
       clearTimeout(window._jargonTimer);
       window._jargonTimer = setTimeout(() => {
-        if (window._jargonPrevText && window._jargonListening) {
-          console.log('[Jargon] Silence timeout — translating last chunk:', window._jargonPrevText);
-          translateAndShow(window._jargonPrevText);
+        const sentence = (window._jargonBuffer + ' ' + window._jargonPrevText).trim();
+        if (sentence && window._jargonListening) {
+          console.log('[Jargon] Silence — flushing sentence:', sentence);
+          translateAndShow(sentence);
+          window._jargonBuffer   = '';
           window._jargonPrevText = '';
         }
-      }, 1500);
+      }, 2000);
     };
 
     rec.onerror = (e) => {
@@ -221,6 +225,7 @@ if (!window._jargonInitialised) {
     clearTimeout(window._jargonTimer);
     window._jargonPrevText   = '';
     window._jargonPrevLength = 0;
+    window._jargonBuffer     = '';
   }
 
   // ─── Toast ────────────────────────────────────────────────────────────────
