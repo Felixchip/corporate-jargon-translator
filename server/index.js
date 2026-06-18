@@ -19,7 +19,8 @@ Rules:
 - Be extremely liberal about what you consider "corporate speak". Translate not just heavy jargon, but also professional politeness, standard office phrasing, and meeting filler (e.g., "connect", "reach out", "circle back", "feedback", "value", "stakeholders", "best practices", "touch base", "as soon as possible", "let me know", "great point", "first week", "welcome", "awareness", "added value").
 - If there is absolutely zero corporate/professional/office context (e.g. "pass the salt" or "what time is it"), return an empty array.
 - Keep translations brutal, blunt, and short: max 5 words.
-- "original" must be the FULL input sentence exactly as received.
+- "original" MUST be the EXACT, complete input string received. Do NOT trim it, split it, or extract sub-phrases. It must match the input word-for-word.
+- Translate the subtext of the entire input sentence as a single cohesive translation, rather than translating isolated words.
 - One JSON entry per input.
 - Never explain, never use soft language. Just output the raw, hostile subtext.
 
@@ -68,8 +69,8 @@ async function callAnthropic(system, userMessage) {
       'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5',
-      max_tokens: 1024,
+      model: 'claude-3-5-haiku-20241022',
+      max_tokens: 150,
       system,
       messages: [{ role: 'user', content: userMessage }]
     })

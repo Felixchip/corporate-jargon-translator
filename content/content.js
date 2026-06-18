@@ -166,19 +166,13 @@ if (!window._jargonInitialised) {
 
       window._jargonBuffer = currentText;
 
-      // Determine dynamic silence timeout based on word count to be extremely responsive:
-      // - 1.8s for very short fragments (give them time to expand)
-      // - 1.0s for normal sentence lengths (natural conversational pause)
-      // - 0.6s for long sentences (15+ words)
-      // - 0.4s for very long sentences (25+ words) to force a quick flush on any breath
+      // Determine dynamic silence timeout:
+      // - 1.3s for very short fragments (under 5 words) to allow room to finish the thought
+      // - 0.95s (950ms) for normal sentences (5+ words) for fast but safe sentence boundary detection
       const words = currentText.split(/\s+/).filter(Boolean).length;
-      let timeoutMs = 1800;
-      if (words >= 25) {
-        timeoutMs = 400;
-      } else if (words >= 15) {
-        timeoutMs = 600;
-      } else if (words >= 6) {
-        timeoutMs = 1000;
+      let timeoutMs = 1300;
+      if (words >= 5) {
+        timeoutMs = 950;
       }
 
       clearTimeout(window._jargonTimer);
