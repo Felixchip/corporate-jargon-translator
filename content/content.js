@@ -8,6 +8,10 @@ if (!window._jargonInitialised) {
   window._jargonRec      = null;
   window._jargonSeen     = new Set();
   window._jargonNextIndex = 0;
+  window._jargonTimer    = null;
+  window._jargonPending  = '';
+
+  const SILENCE_DELAY = 1200; // 1.2 seconds of silence signals a complete sentence/thought
 
   // ─── UI ────────────────────────────────────────────────────────────────
 
@@ -130,18 +134,28 @@ if (!window._jargonInitialised) {
     rec.lang           = 'en-US';
 
     rec.onresult = (e) => {
-      console.log('[Jargon] onresult triggered. Total results:', e.results.length, 'Next index to process:', window._jargonNextIndex);
-      
+      let currentText = '';
       for (let i = window._jargonNextIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) {
-          const text = e.results[i][0].transcript.trim();
-          console.log(`[Jargon] Chunk [${i}] finalized:`, text);
-          if (text) {
-            translateAndShow(text);
-          }
-          window._jargonNextIndex = i + 1;
-        }
+        currentText += e.results[i][0].transcript;
       }
+      
+      window._jargonPending = currentText.trim();
+      const targetNextIndex = e.results.length;
+      
+      console.log('[Jargon] Interim accumulated:', window._jargonPending);
+
+      // Reset the silence timer on any speech input
+      clearTimeout(window._jargonTimer);
+      window._jargonTimer = setTimeout(() => {
+        if (window._jargonPending && window._jargonListening) {
+          const textToSend = window._jargonPending;
+          window._jargonPending = '';
+          window._jargonNextIndex = targetNextIndex; // Lock in the results we just translated
+          
+          console.log('[Jargon] Silence detected. Translating chunk:', textToSend);
+          translateAndShow(textToSend);
+        }
+      }, SILENCE_DELAY);
     };
 
     rec.onerror = (e) => {
@@ -177,6 +191,8 @@ if (!window._jargonInitialised) {
       try { rec.stop(); } catch (_) {}
       window._jargonRec = null;
     }
+    clearTimeout(window._jargonTimer);
+    window._jargonPending = '';
   }
 
   // ─── Toast ────────────────────────────────────────────────────────────────
