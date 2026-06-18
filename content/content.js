@@ -256,11 +256,17 @@ if (!window._jargonInitialised) {
       <div class="jargon-toast-translation">${escapeHtml(translation)}</div>
     `;
     container.appendChild(toast);
-    requestAnimationFrame(() => toast.classList.add('show'));
+    
+    // Auto-remove after 8 seconds with a fade-out animation
     setTimeout(() => {
-      toast.classList.remove('show');
-      toast.addEventListener('transitionend', () => toast.remove());
+      toast.classList.add('fade-out');
+      toast.addEventListener('animationend', (e) => {
+        if (e.animationName === 'jargon-fade-out') {
+          toast.remove();
+        }
+      });
     }, 8000);
+
     while (container.children.length > 5) {
       container.firstChild.remove();
     }
