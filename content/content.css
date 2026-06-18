@@ -59,26 +59,35 @@
   bottom: 24px;
   right: 24px;
   z-index: 2147483647;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: #171717;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 9999px;
+  background: #f43f5e;
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   cursor: pointer;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   transition: all 0.2s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  user-select: none;
 }
 
 #jargon-floating-btn:hover {
-  transform: scale(1.08);
+  transform: scale(1.04);
 }
 
 #jargon-floating-btn.listening {
   background: #f43f5e;
   animation: jargon-pulse 2s infinite;
+}
+
+.jargon-btn-label {
+  white-space: nowrap;
 }
 
 @keyframes jargon-pulse {

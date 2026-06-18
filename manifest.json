@@ -1,16 +1,22 @@
 {
   "manifest_version": 3,
   "name": "Corporate Jargon Translator",
-  "version": "2.0.0",
+  "version": "2.0.7",
   "description": "Floating jargon translator that watches your meetings.",
 
   "permissions": [
     "storage",
-    "offscreen"
+    "scripting",
+    "activeTab"
   ],
 
   "host_permissions": [
-    "https://corporate-jargon-translator-production.up.railway.app/*"
+    "https://corporate-jargon-translator-production.up.railway.app/*",
+    "https://*.youtube.com/*",
+    "https://meet.google.com/*",
+    "https://*.zoom.us/*",
+    "https://*.teams.microsoft.com/*",
+    "https://*.webex.com/*"
   ],
 
   "background": {
@@ -25,15 +31,6 @@
       "128": "icons/icon-128.png"
     }
   },
-
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content/content.js"],
-      "css": ["content/content.css"],
-      "run_at": "document_idle"
-    }
-  ],
 
   "icons": {
     "16": "icons/icon-16.png",
