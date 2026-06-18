@@ -166,18 +166,30 @@ if (!window._jargonInitialised) {
 
       window._jargonBuffer = currentText;
 
-      // Silence timer: after 2s of no new speech, flush the cumulative sentence to the API.
-      // We then restart speech recognition to clear Chrome's internal cumulative results buffer
-      // and start the next sentence with a clean slate.
+      // Determine dynamic silence timeout based on word count to be extremely responsive:
+      // - 1.8s for very short fragments (give them time to expand)
+      // - 1.0s for normal sentence lengths (natural conversational pause)
+      // - 0.6s for long sentences (15+ words)
+      // - 0.4s for very long sentences (25+ words) to force a quick flush on any breath
+      const words = currentText.split(/\s+/).filter(Boolean).length;
+      let timeoutMs = 1800;
+      if (words >= 25) {
+        timeoutMs = 400;
+      } else if (words >= 15) {
+        timeoutMs = 600;
+      } else if (words >= 6) {
+        timeoutMs = 1000;
+      }
+
       clearTimeout(window._jargonTimer);
       window._jargonTimer = setTimeout(() => {
         const sentence = window._jargonBuffer.trim();
         if (sentence && window._jargonListening) {
-          console.log('[Jargon] Silence — flushing sentence:', sentence);
+          console.log(`[Jargon] Silence (${timeoutMs}ms) — flushing sentence:`, sentence);
           translateAndShow(sentence);
           startSpeech(); // Restart to clear history
         }
-      }, 2000);
+      }, timeoutMs);
     };
 
     rec.onerror = (e) => {
