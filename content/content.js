@@ -11,7 +11,6 @@ if (!window._jargonInitialised) {
   window._jargonPrevText   = '';
   window._jargonBuffer     = '';  // accumulates committed chunks between silence gaps
   window._jargonTimer      = null;
-  window._jargonStartIndex = 0;
 
   // ─── UI ────────────────────────────────────────────────────────────────
 
@@ -135,7 +134,6 @@ if (!window._jargonInitialised) {
     window._jargonPrevLength = 0;
     window._jargonPrevText   = '';
     window._jargonBuffer     = '';
-    window._jargonStartIndex = 0;
     clearTimeout(window._jargonTimer);
 
     // Always tear down any previous instance before creating a new one.
@@ -159,14 +157,9 @@ if (!window._jargonInitialised) {
     rec.lang           = 'en-US';
 
     rec.onresult = (e) => {
-      // Self-heal if the browser reset the results list
-      if (window._jargonStartIndex >= e.results.length) {
-        window._jargonStartIndex = 0;
-      }
-
-      // Build the current sentence transcript from the start index
+      // Build the full current interim transcript from all results in the list
       let currentText = '';
-      for (let i = window._jargonStartIndex; i < e.results.length; i++) {
+      for (let i = 0; i < e.results.length; i++) {
         currentText += e.results[i][0].transcript;
       }
       currentText = currentText.trim();
@@ -174,12 +167,18 @@ if (!window._jargonInitialised) {
       window._jargonBuffer = currentText;
 
       // Determine dynamic silence timeout:
-      // - 1.3s for very short fragments (under 5 words) to allow room to finish the thought
-      // - 0.95s (950ms) for normal sentences (5+ words) for fast but safe sentence boundary detection
+      // - 1.2s for short fragments (under 5 words) to give them time to finish
+      // - 0.9s (900ms) for normal sentences (5-14 words) for standard boundary detection
+      // - 0.5s (500ms) for long sentences (15-21 words) to flush on a brief breath
+      // - 0.3s (300ms) for very long sentences (22+ words) to force a flush on any pause
       const words = currentText.split(/\s+/).filter(Boolean).length;
-      let timeoutMs = 1300;
-      if (words >= 5) {
-        timeoutMs = 950;
+      let timeoutMs = 1200;
+      if (words >= 22) {
+        timeoutMs = 300;
+      } else if (words >= 15) {
+        timeoutMs = 500;
+      } else if (words >= 5) {
+        timeoutMs = 900;
       }
 
       clearTimeout(window._jargonTimer);
@@ -188,9 +187,7 @@ if (!window._jargonInitialised) {
         if (sentence && window._jargonListening) {
           console.log(`[Jargon] Silence (${timeoutMs}ms) — flushing sentence:`, sentence);
           translateAndShow(sentence);
-          // Set start index for next sentence to the current results length
-          window._jargonStartIndex = e.results.length;
-          window._jargonBuffer = '';
+          startSpeech(); // Restart to clear history and prevent merging
         }
       }, timeoutMs);
     };
@@ -232,7 +229,6 @@ if (!window._jargonInitialised) {
     window._jargonPrevText   = '';
     window._jargonPrevLength = 0;
     window._jargonBuffer     = '';
-    window._jargonStartIndex = 0;
   }
 
   // ─── Toast ────────────────────────────────────────────────────────────────
