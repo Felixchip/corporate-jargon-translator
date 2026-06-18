@@ -192,12 +192,20 @@
 }
 
 @keyframes jargon-fade-out {
-  from {
+  0% {
     opacity: 1;
     transform: translateY(0) scale(1);
+    max-height: 200px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    margin-bottom: 0px;
   }
-  to {
+  100% {
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
+    max-height: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin-bottom: -8px; /* Offset the 8px gap of the flex container */
   }
 }
