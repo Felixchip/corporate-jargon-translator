@@ -29,9 +29,16 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: message.text })
     })
-      .then(res => res.ok ? res.json() : { translations: [] })
+      .then(async res => {
+        if (res.ok) {
+          return res.json();
+        } else {
+          const errText = await res.text().catch(() => 'No error body');
+          return { error: `Server error ${res.status}: ${errText}` };
+        }
+      })
       .then(data => sendResponse(data))
-      .catch(() => sendResponse({ translations: [] }));
+      .catch((err) => sendResponse({ error: `Fetch failed: ${err.message}` }));
 
     return true; // Keep the message channel open for the async response
   }
