@@ -81,29 +81,48 @@ if (!window._jargonInitialised) {
 
   async function translateAndShow(text) {
     const t = text.trim();
-    if (!t || t.length < 5) return;
+    if (!t) {
+      console.log('[Jargon] Skipped translate: text is empty');
+      return;
+    }
+    if (t.length < 5) {
+      console.log(`[Jargon] Skipped translate (length < 5): "${t}"`);
+      return;
+    }
     const key = t.toLowerCase();
-    if (window._jargonSeen.has(key)) return;
+    if (window._jargonSeen.has(key)) {
+      console.log(`[Jargon] Skipped translate (already seen): "${t}"`);
+      return;
+    }
     window._jargonSeen.add(key);
     if (window._jargonSeen.size > 30) {
       const first = window._jargonSeen.values().next().value;
       window._jargonSeen.delete(first);
     }
-    console.log('[Jargon] Translating:', t);
+    console.log('[Jargon] Sending translation request to service worker:', t);
     try {
       // Relay through the service worker — YouTube's CSP blocks direct fetches
       // to external origins from content scripts.
       const data = await chrome.runtime.sendMessage({ type: 'TRANSLATE', text: t });
-      console.log('[Jargon] API response:', JSON.stringify(data));
-      if (!data || data.error) return;
+      console.log('[Jargon] Received response from service worker:', JSON.stringify(data));
+      if (!data) {
+        console.error('[Jargon] Response from service worker was null/undefined');
+        return;
+      }
+      if (data.error) {
+        console.error('[Jargon] Service worker returned error:', data.error);
+        return;
+      }
       if (data.translations?.length > 0) {
         data.translations.forEach(tr => {
           if (!tr || !tr.original || !tr.translation) return;
           showToast(tr.original, tr.translation);
         });
+      } else {
+        console.log('[Jargon] No jargon detected in response');
       }
     } catch (e) {
-      console.warn('[Jargon] sendMessage failed:', e.message);
+      console.error('[Jargon] sendMessage threw error:', e.message);
     }
   }
 
