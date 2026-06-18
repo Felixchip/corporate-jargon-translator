@@ -7,7 +7,9 @@ if (!window._jargonInitialised) {
   window._jargonListening = false;
   window._jargonRec      = null;
   window._jargonSeen     = new Set();
-  window._jargonNextIndex = 0;
+  window._jargonPrevLength = 0;
+  window._jargonPrevText   = '';
+  window._jargonTimer      = null;
 
   // ─── UI ────────────────────────────────────────────────────────────────
 
@@ -125,8 +127,10 @@ if (!window._jargonInitialised) {
   // ─── Speech Recognition ───────────────────────────────────────────────────
 
   function startSpeech() {
-    // Reset chunk index
-    window._jargonNextIndex = 0;
+    // Reset session state
+    window._jargonPrevLength = 0;
+    window._jargonPrevText   = '';
+    clearTimeout(window._jargonTimer);
 
     // Always tear down any previous instance before creating a new one.
     if (window._jargonRec) {
@@ -145,29 +149,40 @@ if (!window._jargonInitialised) {
     const rec = new SR();
     window._jargonRec = rec;
     rec.continuous     = true;
-    rec.interimResults = true; // Keep interim true so we get fast results, but only process finalized chunks
+    rec.interimResults = true;
     rec.lang           = 'en-US';
 
     rec.onresult = (e) => {
-      // Self-healing: if Chrome garbage-collects or clears older results, the length
-      // of e.results will drop below our next index. Reset our pointer to 0 so we don't miss anything.
-      if (e.results.length < window._jargonNextIndex) {
-        console.log('[Jargon] Speech list reset detected. Resetting index.');
-        window._jargonNextIndex = 0;
+      // Build the full current interim transcript
+      let currentText = '';
+      for (let i = 0; i < e.results.length; i++) {
+        currentText += e.results[i][0].transcript;
+      }
+      currentText = currentText.trim();
+
+      console.log('[Jargon] onresult. Length:', e.results.length, '| Text:', currentText);
+
+      // KEY INSIGHT: On YouTube, Chrome never emits isFinal:true.
+      // Instead it silently commits results by SHRINKING the list (e.g. 2→1).
+      // When we detect a shrink, the _previous_ (longer) text was committed — translate it.
+      if (e.results.length < window._jargonPrevLength && window._jargonPrevText) {
+        console.log('[Jargon] List shrunk — Chrome committed:', window._jargonPrevText);
+        translateAndShow(window._jargonPrevText);
+        window._jargonPrevText = '';
       }
 
-      console.log('[Jargon] onresult triggered. Length:', e.results.length, 'Next index:', window._jargonNextIndex);
-      
-      for (let i = window._jargonNextIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) {
-          const text = e.results[i][0].transcript.trim();
-          console.log(`[Jargon] Chunk [${i}] finalized:`, text);
-          if (text) {
-            translateAndShow(text);
-          }
-          window._jargonNextIndex = i + 1;
+      window._jargonPrevLength = e.results.length;
+      window._jargonPrevText   = currentText;
+
+      // Silence timer: catches the final chunk before the user stops talking
+      clearTimeout(window._jargonTimer);
+      window._jargonTimer = setTimeout(() => {
+        if (window._jargonPrevText && window._jargonListening) {
+          console.log('[Jargon] Silence timeout — translating last chunk:', window._jargonPrevText);
+          translateAndShow(window._jargonPrevText);
+          window._jargonPrevText = '';
         }
-      }
+      }, 1500);
     };
 
     rec.onerror = (e) => {
@@ -203,6 +218,9 @@ if (!window._jargonInitialised) {
       try { rec.stop(); } catch (_) {}
       window._jargonRec = null;
     }
+    clearTimeout(window._jargonTimer);
+    window._jargonPrevText   = '';
+    window._jargonPrevLength = 0;
   }
 
   // ─── Toast ────────────────────────────────────────────────────────────────
