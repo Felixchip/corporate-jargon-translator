@@ -7,10 +7,7 @@ if (!window._jargonInitialised) {
   window._jargonListening = false;
   window._jargonRec      = null;
   window._jargonSeen     = new Set();
-  window._jargonPending  = '';
-  window._jargonTimer    = null;
-
-  const SILENCE_DELAY = 1500;
+  window._jargonNextIndex = 0;
 
   // ─── UI ────────────────────────────────────────────────────────────────
 
@@ -109,8 +106,10 @@ if (!window._jargonInitialised) {
   // ─── Speech Recognition ───────────────────────────────────────────────────
 
   function startSpeech() {
+    // Reset chunk index
+    window._jargonNextIndex = 0;
+
     // Always tear down any previous instance before creating a new one.
-    // Calling .start() on an ended SpeechRecognition instance silently fails.
     if (window._jargonRec) {
       const old = window._jargonRec;
       old.onend = old.onerror = old.onresult = null;
@@ -127,39 +126,22 @@ if (!window._jargonInitialised) {
     const rec = new SR();
     window._jargonRec = rec;
     rec.continuous     = true;
-    rec.interimResults = true;
+    rec.interimResults = true; // Keep interim true so we get fast results, but check isFinal
     rec.lang           = 'en-US';
 
     rec.onresult = (e) => {
-      let accumulated = '';
-      for (let i = 0; i < e.results.length; i++) {
-        accumulated += e.results[i][0].transcript;
-      }
+      console.log('[Jargon] onresult triggered. Total results:', e.results.length, 'Next index to process:', window._jargonNextIndex);
       
-      window._jargonPending = accumulated;
-      console.log('[Jargon] Interim accumulated text:', window._jargonPending);
-
-      // Reset the silence timer on any speech input
-      clearTimeout(window._jargonTimer);
-      window._jargonTimer = setTimeout(() => {
-        if (window._jargonPending && window._jargonListening) {
-          const textToSend = window._jargonPending;
-          window._jargonPending = '';
-          
-          console.log('[Jargon] Silence detected. Translating full sentence:', textToSend);
-          
-          // Temporarily stop recognition to clear the browser's speech buffer
-          stopSpeech();
-          
-          // Send for translation
-          translateAndShow(textToSend);
-          
-          // Restart recognition fresh
-          if (window._jargonListening) {
-            startSpeech();
+      for (let i = window._jargonNextIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          const text = e.results[i][0].transcript.trim();
+          console.log(`[Jargon] Chunk [${i}] finalized:`, text);
+          if (text) {
+            translateAndShow(text);
           }
+          window._jargonNextIndex = i + 1;
         }
-      }, SILENCE_DELAY);
+      }
     };
 
     rec.onerror = (e) => {
@@ -195,8 +177,6 @@ if (!window._jargonInitialised) {
       try { rec.stop(); } catch (_) {}
       window._jargonRec = null;
     }
-    clearTimeout(window._jargonTimer);
-    window._jargonPending = '';
   }
 
   // ─── Toast ────────────────────────────────────────────────────────────────
