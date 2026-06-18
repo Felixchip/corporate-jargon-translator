@@ -15,11 +15,13 @@ if (!window._jargonInitialised) {
   // ─── UI ────────────────────────────────────────────────────────────────
 
   window._jargonCreateUI = function createFloatingUI() {
-    if (document.getElementById('jargon-floating-btn')) return;
+    if (!document.getElementById('jargon-toast-container')) {
+      const toastContainer = document.createElement('div');
+      toastContainer.id = 'jargon-toast-container';
+      document.body.appendChild(toastContainer);
+    }
 
-    const toastContainer = document.createElement('div');
-    toastContainer.id = 'jargon-toast-container';
-    document.body.appendChild(toastContainer);
+    if (document.getElementById('jargon-floating-btn')) return;
 
     const btn = document.createElement('div');
     btn.id = 'jargon-floating-btn';
