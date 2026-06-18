@@ -7,11 +7,7 @@ if (!window._jargonInitialised) {
   window._jargonListening = false;
   window._jargonRec      = null;
   window._jargonSeen     = new Set();
-  window._jargonTimer    = null;
-  window._jargonPending  = '';
-  window._jargonLastTranslated = '';
-
-  const SILENCE_DELAY = 1200; // 1.2 seconds of silence signals a complete sentence/thought
+  window._jargonNextIndex = 0;
 
   // ─── UI ────────────────────────────────────────────────────────────────
 
@@ -129,8 +125,8 @@ if (!window._jargonInitialised) {
   // ─── Speech Recognition ───────────────────────────────────────────────────
 
   function startSpeech() {
-    // Reset session trackers
-    window._jargonLastTranslated = '';
+    // Reset chunk index
+    window._jargonNextIndex = 0;
 
     // Always tear down any previous instance before creating a new one.
     if (window._jargonRec) {
@@ -149,45 +145,29 @@ if (!window._jargonInitialised) {
     const rec = new SR();
     window._jargonRec = rec;
     rec.continuous     = true;
-    rec.interimResults = true;
+    rec.interimResults = true; // Keep interim true so we get fast results, but only process finalized chunks
     rec.lang           = 'en-US';
 
     rec.onresult = (e) => {
-      // Loop from 0 to e.results.length to build the absolute current transcript list.
-      // This is completely self-healing if Chrome resets or clears the Speech Recognition list.
-      let currentText = '';
-      for (let i = 0; i < e.results.length; i++) {
-        currentText += e.results[i][0].transcript + ' ';
+      // Self-healing: if Chrome garbage-collects or clears older results, the length
+      // of e.results will drop below our next index. Reset our pointer to 0 so we don't miss anything.
+      if (e.results.length < window._jargonNextIndex) {
+        console.log('[Jargon] Speech list reset detected. Resetting index.');
+        window._jargonNextIndex = 0;
       }
-      
-      window._jargonPending = currentText.trim();
-      console.log('[Jargon] Interim accumulated:', window._jargonPending);
 
-      // Reset the silence timer on any speech input
-      clearTimeout(window._jargonTimer);
-      window._jargonTimer = setTimeout(() => {
-        if (window._jargonPending && window._jargonListening) {
-          const textToSend = window._jargonPending;
-          window._jargonPending = '';
-          
-          // Self-healing text diff: If this is an extension of the last translated sentence,
-          // only send the new part. Otherwise, treat it as a new sentence.
-          if (window._jargonLastTranslated && textToSend.toLowerCase().startsWith(window._jargonLastTranslated.toLowerCase())) {
-            const newPart = textToSend.slice(window._jargonLastTranslated.length).trim();
-            if (newPart.length >= 5) {
-              console.log('[Jargon] Silence detected. Translating new appended part:', newPart);
-              translateAndShow(newPart);
-              window._jargonLastTranslated = textToSend;
-            } else {
-              console.log('[Jargon] Silence detected, but appended part is too short. Skipping.');
-            }
-          } else {
-            console.log('[Jargon] Silence detected. Translating fresh sentence chunk:', textToSend);
-            translateAndShow(textToSend);
-            window._jargonLastTranslated = textToSend;
+      console.log('[Jargon] onresult triggered. Length:', e.results.length, 'Next index:', window._jargonNextIndex);
+      
+      for (let i = window._jargonNextIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          const text = e.results[i][0].transcript.trim();
+          console.log(`[Jargon] Chunk [${i}] finalized:`, text);
+          if (text) {
+            translateAndShow(text);
           }
+          window._jargonNextIndex = i + 1;
         }
-      }, SILENCE_DELAY);
+      }
     };
 
     rec.onerror = (e) => {
@@ -223,9 +203,6 @@ if (!window._jargonInitialised) {
       try { rec.stop(); } catch (_) {}
       window._jargonRec = null;
     }
-    clearTimeout(window._jargonTimer);
-    window._jargonPending = '';
-    window._jargonLastTranslated = '';
   }
 
   // ─── Toast ────────────────────────────────────────────────────────────────
