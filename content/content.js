@@ -4,13 +4,14 @@
 if (!window._jargonInitialised) {
   window._jargonInitialised = true;
 
-  window._jargonListening = false;
-  window._jargonRec        = null;
-  window._jargonSeen       = new Set();
-  window._jargonPrevLength = 0;
-  window._jargonPrevText   = '';
-  window._jargonBuffer     = '';  // accumulates committed chunks between silence gaps
-  window._jargonTimer      = null;
+  window._jargonListening     = false;
+  window._jargonRec           = null;
+  window._jargonSeen          = new Set();
+  window._jargonPrevLength    = 0;
+  window._jargonPrevText      = '';
+  window._jargonBuffer        = '';
+  window._jargonTimer         = null;
+  window._jargonTranslations  = []; // stores {original, translation} for the session
 
   // ─── UI ────────────────────────────────────────────────────────────────
 
@@ -52,10 +53,17 @@ if (!window._jargonInitialised) {
     console.log('[Jargon] toggleListening → listening:', window._jargonListening);
     updateButtonUI();
     if (window._jargonListening) {
+      // Clear session when starting fresh
+      window._jargonTranslations = [];
+      window._jargonSeen.clear();
+      hideSummarizeBtn();
       startSpeech();
     } else {
       stopSpeech();
-      window._jargonSeen.clear();
+      // Show summarize button if we captured anything
+      if (window._jargonTranslations.length > 0) {
+        showSummarizeBtn();
+      }
     }
   }
 
@@ -78,6 +86,111 @@ if (!window._jargonInitialised) {
     }
   }
 
+  // ─── Summarize Button ─────────────────────────────────────────────────────
+
+  function showSummarizeBtn() {
+    if (document.getElementById('jargon-summarize-btn')) return;
+    const btn = document.createElement('div');
+    btn.id = 'jargon-summarize-btn';
+    btn.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14,2 14,8 20,8" fill="none" stroke="currentColor" stroke-width="2"/>
+        <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2"/>
+        <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2"/>
+        <polyline points="10,9 9,9 8,9" fill="none" stroke="currentColor" stroke-width="2"/>
+      </svg>
+      <span>Summarize Session</span>
+    `;
+    btn.addEventListener('click', summarizeSession);
+    document.body.appendChild(btn);
+  }
+
+  function hideSummarizeBtn() {
+    const btn = document.getElementById('jargon-summarize-btn');
+    if (btn) btn.remove();
+  }
+
+  async function summarizeSession() {
+    const btn = document.getElementById('jargon-summarize-btn');
+    if (btn) {
+      btn.style.opacity = '0.6';
+      btn.style.pointerEvents = 'none';
+      btn.querySelector('span').textContent = 'Summarizing…';
+    }
+
+    try {
+      const data = await chrome.runtime.sendMessage({
+        type: 'SUMMARIZE',
+        translations: window._jargonTranslations
+      });
+
+      if (btn) btn.remove();
+
+      if (data && data.summary) {
+        showSummaryCard(data.summary);
+      } else if (data && data.error) {
+        console.error('[Jargon] Summarize error:', data.error);
+        if (btn) {
+          btn.style.opacity = '1';
+          btn.style.pointerEvents = 'auto';
+          btn.querySelector('span').textContent = 'Summarize Session';
+        }
+      }
+    } catch (e) {
+      console.error('[Jargon] Summarize sendMessage threw:', e.message);
+      if (btn) {
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+        btn.querySelector('span').textContent = 'Summarize Session';
+      }
+    }
+  }
+
+  function showSummaryCard(summary) {
+    // Remove existing summary card if any
+    const existing = document.getElementById('jargon-summary-card');
+    if (existing) existing.remove();
+
+    const card = document.createElement('div');
+    card.id = 'jargon-summary-card';
+    card.innerHTML = `
+      <div class="jargon-summary-header">
+        <span class="jargon-summary-badge">Session Summary</span>
+        <div class="jargon-summary-actions">
+          <button class="jargon-summary-copy" title="Copy to clipboard">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <rect x="9" y="9" width="13" height="13" rx="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copy
+          </button>
+          <button class="jargon-summary-close" title="Dismiss">✕</button>
+        </div>
+      </div>
+      <div class="jargon-summary-body">${escapeHtml(summary).replace(/\n/g, '<br>')}</div>
+    `;
+
+    // Copy button
+    card.querySelector('.jargon-summary-copy').addEventListener('click', () => {
+      navigator.clipboard.writeText(summary).then(() => {
+        const copyBtn = card.querySelector('.jargon-summary-copy');
+        copyBtn.textContent = '✓ Copied';
+        setTimeout(() => {
+          copyBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
+        }, 2000);
+      });
+    });
+
+    // Dismiss button
+    card.querySelector('.jargon-summary-close').addEventListener('click', () => {
+      card.classList.add('fade-out');
+      card.addEventListener('animationend', () => card.remove());
+    });
+
+    document.body.appendChild(card);
+  }
+
   // ─── Translation ─────────────────────────────────────────────────────────
 
   async function translateAndShow(text) {
@@ -86,24 +199,18 @@ if (!window._jargonInitialised) {
       console.log('[Jargon] Skipped translate: text is empty');
       return;
     }
-    if (t.length < 5) {
-      console.log(`[Jargon] Skipped translate (length < 5): "${t}"`);
-      return;
-    }
     const key = t.toLowerCase();
     if (window._jargonSeen.has(key)) {
       console.log(`[Jargon] Skipped translate (already seen): "${t}"`);
       return;
     }
     window._jargonSeen.add(key);
-    if (window._jargonSeen.size > 30) {
+    if (window._jargonSeen.size > 50) {
       const first = window._jargonSeen.values().next().value;
       window._jargonSeen.delete(first);
     }
     console.log('[Jargon] Sending translation request to service worker:', t);
     try {
-      // Relay through the service worker — YouTube's CSP blocks direct fetches
-      // to external origins from content scripts.
       const data = await chrome.runtime.sendMessage({ type: 'TRANSLATE', text: t });
       console.log('[Jargon] Received response from service worker:', JSON.stringify(data));
       if (!data) {
@@ -117,6 +224,8 @@ if (!window._jargonInitialised) {
       if (data.translations?.length > 0) {
         data.translations.forEach(tr => {
           if (!tr || !tr.original || !tr.translation) return;
+          // Store for summary
+          window._jargonTranslations.push({ original: tr.original, translation: tr.translation });
           showToast(tr.original, tr.translation);
         });
       } else {
@@ -252,11 +361,11 @@ if (!window._jargonInitialised) {
     toast.className = 'jargon-toast';
     toast.innerHTML = `
       <div class="jargon-toast-badge">Jargon Detected</div>
-      <div class="jargon-toast-original">“${escapeHtml(original)}”</div>
+      <div class="jargon-toast-original">"${escapeHtml(original)}"</div>
       <div class="jargon-toast-translation">${escapeHtml(translation)}</div>
     `;
     container.appendChild(toast);
-    
+
     // Auto-remove after 8 seconds with a fade-out animation
     setTimeout(() => {
       toast.classList.add('fade-out');

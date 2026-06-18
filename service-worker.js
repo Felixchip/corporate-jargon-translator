@@ -40,6 +40,26 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       .then(data => sendResponse(data))
       .catch((err) => sendResponse({ error: `Fetch failed: ${err.message}` }));
 
-    return true; // Keep the message channel open for the async response
+    return true;
+  }
+
+  if (message.type === 'SUMMARIZE') {
+    fetch(`${BACKEND_URL}/api/summarize`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ translations: message.translations })
+    })
+      .then(async res => {
+        if (res.ok) {
+          return res.json();
+        } else {
+          const errText = await res.text().catch(() => 'No error body');
+          return { error: `Server error ${res.status}: ${errText}` };
+        }
+      })
+      .then(data => sendResponse(data))
+      .catch((err) => sendResponse({ error: `Fetch failed: ${err.message}` }));
+
+    return true;
   }
 });
