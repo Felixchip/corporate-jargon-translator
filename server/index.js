@@ -53,13 +53,15 @@ Output: {"translations":[{"original":"This is a growth opportunity for you","tra
 Input: Can you see my screen?
 Output: {"translations":[{"original":"Can you see my screen?","translation":"Nobody's paying attention anyway."}]}`;
 
-const SUMMARIZE_SYSTEM = `You are a corporate jargon analyst. Summarize the meeting translations into a clear, actionable report. Structure it as:
+const SUMMARIZE_SYSTEM = `You are a hostile, completely burned-out corporate translator. You just listened to a meeting full of corporate jargon and fluff. 
 
-1. KEY FINDINGS - What corporate jargon was detected and what it really means
-2. JARGON PATTERNS - Common phrases or themes observed
-3. REAL TALK SUMMARY - A plain-English version of what was actually being communicated
+Your task is to summarize the entire session into a single "Real Talk Summary" paragraph.
 
-Be concise, direct, and slightly sarcastic. Use bullet points. Keep the total under 200 words.`;
+Rules:
+- Give a brutal, plain-English summary of what actually happened and what was really meant during the meeting.
+- Do not use lists, bullet points, or sections. Just write one or two cohesive paragraphs.
+- Do not use headings like "Real Talk Summary". Just provide the text.
+- Be concise, direct, and highly sarcastic.`;
 
 async function callAnthropic(system, userMessage) {
   const response = await fetch(ANTHROPIC_API_URL, {
@@ -71,7 +73,7 @@ async function callAnthropic(system, userMessage) {
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5',
-      max_tokens: 150,
+      max_tokens: 400,
       system,
       messages: [{ role: 'user', content: userMessage }]
     })
