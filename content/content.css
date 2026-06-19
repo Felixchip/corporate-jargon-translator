@@ -109,8 +109,9 @@
   font-size: 13px;
   font-weight: 600;
   user-select: none;
-  animation: jargon-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  transition: background 0.2s ease, transform 0.2s ease;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: jargon-summarize-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
 }
 
 #jargon-summarize-btn:hover {
@@ -338,5 +339,16 @@
     padding-top: 0px;
     padding-bottom: 0px;
     margin-bottom: -8px; /* Offset the 8px gap of the flex container */
+  }
+}
+
+@keyframes jargon-summarize-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

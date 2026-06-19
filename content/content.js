@@ -60,10 +60,8 @@ if (!window._jargonInitialised) {
       startSpeech();
     } else {
       stopSpeech();
-      // Show summarize button if we captured anything
-      if (window._jargonTranslations.length > 0) {
-        showSummarizeBtn();
-      }
+      // Always offer a summary after a session
+      showSummarizeBtn();
     }
   }
 
@@ -119,6 +117,12 @@ if (!window._jargonInitialised) {
       btn.querySelector('span').textContent = 'Summarizing…';
     }
 
+    if (window._jargonTranslations.length === 0) {
+      if (btn) btn.remove();
+      showSummaryCard('Nothing to summarize — no jargon was detected this session.');
+      return;
+    }
+
     try {
       const data = await chrome.runtime.sendMessage({
         type: 'SUMMARIZE',
@@ -131,11 +135,7 @@ if (!window._jargonInitialised) {
         showSummaryCard(data.summary);
       } else if (data && data.error) {
         console.error('[Jargon] Summarize error:', data.error);
-        if (btn) {
-          btn.style.opacity = '1';
-          btn.style.pointerEvents = 'auto';
-          btn.querySelector('span').textContent = 'Summarize Session';
-        }
+        showSummaryCard('Summary failed: ' + data.error);
       }
     } catch (e) {
       console.error('[Jargon] Summarize sendMessage threw:', e.message);
