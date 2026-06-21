@@ -26,6 +26,13 @@
     "service_worker": "service-worker.js"
   },
 
+  "web_accessible_resources": [
+    {
+      "resources": ["upgrade/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+
   "action": {
     "default_title": "Corporate Jargon Translator",
     "default_icon": {

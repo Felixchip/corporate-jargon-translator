@@ -49,20 +49,40 @@ if (!window._jargonInitialised) {
   });
 
   function toggleListening() {
-    window._jargonListening = !window._jargonListening;
-    console.log('[Jargon] toggleListening → listening:', window._jargonListening);
-    updateButtonUI();
     if (window._jargonListening) {
-      // Clear session when starting fresh
+      window._jargonListening = false;
+      console.log('[Jargon] toggleListening → listening: false');
+      updateButtonUI();
+      stopSpeech();
+      showSummarizeBtn();
+      return;
+    }
+
+    // Check usage limits before starting
+    chrome.storage.local.get(['usageCount', 'isPremium'], (data) => {
+      const isPremium = data.isPremium || false;
+      const count = data.usageCount || 0;
+
+      if (!isPremium && count >= 3) {
+        console.log('[Jargon] Usage limit reached. Opening upgrade page.');
+        window.open(chrome.runtime.getURL('upgrade/upgrade.html'), '_blank');
+        return;
+      }
+
+      // Increment count for non-premium users
+      if (!isPremium) {
+        chrome.storage.local.set({ usageCount: count + 1 });
+      }
+
+      window._jargonListening = true;
+      console.log('[Jargon] toggleListening → listening: true (usage count:', count + 1, ')');
+      updateButtonUI();
+      
       window._jargonTranslations = [];
       window._jargonSeen.clear();
       hideSummarizeBtn();
       startSpeech();
-    } else {
-      stopSpeech();
-      // Always offer a summary after a session
-      showSummarizeBtn();
-    }
+    });
   }
 
   function updateButtonUI() {

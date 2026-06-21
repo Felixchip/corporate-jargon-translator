@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unlock Unlimited Jargon Translations</title>
+  <link rel="stylesheet" href="upgrade.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  
+  <div class="upgrade-container">
+    <div class="upgrade-header">
+      <div class="upgrade-badge">Free Limit Reached</div>
+      <h1>Unlock Unlimited Translations</h1>
+      <p class="subtitle">You've translated 3 meetings and hit the free limit.<br>Share the extension on X (Twitter) to unlock unlimited access forever.</p>
+    </div>
+
+    <div class="steps-container">
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <h3>Share on X</h3>
+          <p>Click the button below to post our pre-drafted tweet. It just takes a second!</p>
+          <button id="tweet-btn" class="action-btn tweet-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            Post on X
+          </button>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <h3>Verify URL</h3>
+          <p>Paste the link to your posted tweet here to instantly unlock your account.</p>
+          <div class="input-group">
+            <input type="url" id="tweet-url" placeholder="https://x.com/your-username/status/123456789" autocomplete="off" spellcheck="false">
+            <button id="verify-btn" class="action-btn verify-btn" disabled>Unlock</button>
+          </div>
+          <div id="error-message" class="error-message"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="success-state" class="success-state" style="display: none;">
+      <svg class="success-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+      <h2>Premium Unlocked!</h2>
+      <p>Thank you for sharing! You now have unlimited access to the Corporate Jargon Translator.</p>
+      <button id="close-btn" class="action-btn close-btn">Return to Meeting</button>
+    </div>
+
+  </div>
+
+  <script src="upgrade.js"></script>
+</body>
+</html>
