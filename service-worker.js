@@ -37,7 +37,19 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           return { error: `Server error ${res.status}: ${errText}` };
         }
       })
-      .then(data => sendResponse(data))
+      .then(data => {
+        if (data && data.translations && data.translations.length > 0) {
+          chrome.tabs.query({}, (tabs) => {
+            tabs.forEach(t => {
+              chrome.tabs.sendMessage(t.id, { 
+                type: 'BROADCAST_TOAST', 
+                translations: data.translations 
+              }).catch(() => {});
+            });
+          });
+        }
+        sendResponse(data);
+      })
       .catch((err) => sendResponse({ error: `Fetch failed: ${err.message}` }));
 
     return true;
