@@ -27,14 +27,14 @@ if (!window._jargonInitialised) {
     const btn = document.createElement('div');
     btn.id = 'jargon-floating-btn';
     btn.innerHTML = `
-      <svg class="jargon-mic" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+      <svg class="jargon-mic" width="20" height="20" viewBox="0 0 48 48" fill="currentColor">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M18.5 6C10.4919 6 4 12.4919 4 20.5C4 38.5 28 42 28 42V35H29.5C37.5081 35 44 28.5081 44 20.5C44 12.4919 37.5081 6 29.5 6H18.5ZM24 23.5C25.3807 23.5 26.5 22.3807 26.5 21C26.5 19.6193 25.3807 18.5 24 18.5C22.6193 18.5 21.5 19.6193 21.5 21C21.5 22.3807 22.6193 23.5 24 23.5ZM34.5 21C34.5 22.3807 33.3807 23.5 32 23.5C30.6193 23.5 29.5 22.3807 29.5 21C29.5 19.6193 30.6193 18.5 32 18.5C33.3807 18.5 34.5 19.6193 34.5 21ZM16 23.5C17.3807 23.5 18.5 22.3807 18.5 21C18.5 19.6193 17.3807 18.5 16 18.5C14.6193 18.5 13.5 19.6193 13.5 21C13.5 22.3807 14.6193 23.5 16 23.5Z"/>
       </svg>
-      <svg class="jargon-stop" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:none">
-        <rect x="6" y="6" width="12" height="12" rx="2"/>
+      <svg class="jargon-stop" width="20" height="20" viewBox="0 0 24 24" fill="none" style="display:none">
+        <circle cx="12" cy="12" r="12" fill="white"/>
+        <rect x="8" y="8" width="8" height="8" fill="#ff1a1a" rx="1.5"/>
       </svg>
-      <span class="jargon-btn-label">Start Translating</span>
+      <span class="jargon-btn-label">Translate the BS</span>
     `;
     btn.addEventListener('click', toggleListening);
     document.body.appendChild(btn);
@@ -75,12 +75,12 @@ if (!window._jargonInitialised) {
       btn.classList.add('listening');
       mic.style.display  = 'none';
       stop.style.display = 'block';
-      label.textContent  = 'Stop';
+      label.textContent  = 'Stop Translating';
     } else {
       btn.classList.remove('listening');
       mic.style.display  = 'block';
       stop.style.display = 'none';
-      label.textContent  = 'Start Translating';
+      label.textContent  = 'Translate the BS';
     }
   }
 
@@ -90,16 +90,7 @@ if (!window._jargonInitialised) {
     if (document.getElementById('jargon-summarize-btn')) return;
     const btn = document.createElement('div');
     btn.id = 'jargon-summarize-btn';
-    btn.innerHTML = `
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14,2 14,8 20,8" fill="none" stroke="currentColor" stroke-width="2"/>
-        <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2"/>
-        <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2"/>
-        <polyline points="10,9 9,9 8,9" fill="none" stroke="currentColor" stroke-width="2"/>
-      </svg>
-      <span>Summarize Session</span>
-    `;
+    btn.innerHTML = `<span>Summarize</span>`;
     btn.addEventListener('click', summarizeSession);
     document.body.appendChild(btn);
   }
