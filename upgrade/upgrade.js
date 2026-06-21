@@ -4,8 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const verifyBtn = document.getElementById('verify-btn');
   const errorMessage = document.getElementById('error-message');
   
-  const stepsContainer = document.querySelector('.steps-container');
-  const header = document.querySelector('.upgrade-header');
+  const mainState = document.getElementById('main-state');
   const successState = document.getElementById('success-state');
   const closeBtn = document.getElementById('close-btn');
 
@@ -35,9 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // Valid tweet URL! Unlock premium.
       chrome.storage.local.set({ isPremium: true }, () => {
         // Transition UI to success
-        stepsContainer.style.display = 'none';
-        header.style.display = 'none';
-        successState.style.display = 'block';
+        mainState.style.display = 'none';
+        successState.style.display = 'flex';
       });
     } else {
       // Invalid URL
