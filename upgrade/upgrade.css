@@ -6,12 +6,15 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: #050505; /* Pitch black */
+  background-color: #050505;
   color: #ffffff;
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 0;
+  padding: 40px 24px;
   overflow: hidden;
   position: relative;
 }
@@ -55,8 +58,8 @@ body {
   width: 100%;
   height: 100%;
   border-radius: 28px;
-  background: radial-gradient(circle at 10% 30%, rgba(59, 130, 246, 0.08), transparent 50%);
-  box-shadow: inset 2px 0 20px -5px rgba(59, 130, 246, 0.2); /* glowing left edge */
+  background: radial-gradient(circle at 10% 30%, rgba(52, 212, 168, 0.06), transparent 50%);
+  box-shadow: inset 2px 0 20px -5px rgba(52, 212, 168, 0.15);
   pointer-events: none;
   z-index: 0;
 }
@@ -84,32 +87,33 @@ body {
   align-items: center;
 }
 
-/* Progress bars at top */
+/* Progress bars – sits just below the icon, matching its width */
 .progress-bars {
   position: relative;
   z-index: 2;
   display: flex;
-  gap: 6px;
-  margin-bottom: 32px;
+  gap: 5px;
+  width: 64px; /* match icon-wrapper */
+  margin-bottom: 24px;
 }
 
 .bar {
-  width: 24px;
+  flex: 1;
   height: 3px;
   border-radius: 2px;
   background: rgba(255, 255, 255, 0.1);
 }
 
 .bar.active {
-  background: #3b82f6;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+  background: #34d4a8;
+  box-shadow: 0 0 8px rgba(52, 212, 168, 0.5);
 }
 
 /* Central Icon (Folder) */
 .icon-wrapper {
   width: 64px;
   height: 64px;
-  margin-bottom: 24px;
+  margin-bottom: 12px; /* smaller gap — progress bars sit below */
   position: relative;
   display: flex;
   align-items: center;
@@ -188,18 +192,14 @@ h1 {
 }
 
 .option-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-}
-
-.option-icon.blue-icon {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  color: #aaaaaa;
+  /* no background or border-radius — plain icon only */
 }
 
 .option-text {
@@ -268,10 +268,10 @@ h1 {
 }
 
 .verify-action:not(:disabled) {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: #fff;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+  background: #34d4a8;
+  border-color: #34d4a8;
+  color: #000;
+  box-shadow: 0 0 10px rgba(52, 212, 168, 0.3);
 }
 
 .verify-action:disabled {
@@ -290,16 +290,16 @@ h1 {
 
 /* Success State Specifics */
 .success-wrapper .folder {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
+  background: rgba(52, 212, 168, 0.1);
+  border-color: rgba(52, 212, 168, 0.2);
+  color: #34d4a8;
 }
 
-/* Footer */
+/* Footer – sits below the card naturally */
 .upgrade-footer {
-  position: absolute;
-  bottom: 24px;
+  margin-top: 20px;
   width: 100%;
+  max-width: 440px;
   text-align: center;
   font-size: 13px;
   color: #555555;
