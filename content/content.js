@@ -147,6 +147,23 @@ if (!window._jargonInitialised) {
     }
   }
 
+  function getThemeClass() {
+    try {
+      const bgColor = window.getComputedStyle(document.body).backgroundColor;
+      const rgbMatch = bgColor.match(/\d+/g);
+      if (rgbMatch && rgbMatch.length >= 3) {
+        if (rgbMatch.length === 4 && parseFloat(rgbMatch[3]) === 0) return 'jargon-theme-dark';
+        const r = parseInt(rgbMatch[0], 10);
+        const g = parseInt(rgbMatch[1], 10);
+        const b = parseInt(rgbMatch[2], 10);
+        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+        return yiq >= 128 ? 'jargon-theme-dark' : 'jargon-theme-light';
+      }
+    } catch (e) {}
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches 
+      ? 'jargon-theme-light' : 'jargon-theme-dark';
+  }
+
   function showSummaryCard(summary) {
     // Remove existing summary card if any
     const existing = document.getElementById('jargon-summary-card');
@@ -154,10 +171,15 @@ if (!window._jargonInitialised) {
 
     const card = document.createElement('div');
     card.id = 'jargon-summary-card';
+    card.className = `jargon-summary-card ${getThemeClass()}`;
+    
     card.innerHTML = `
-      <div class="jargon-summary-header">
-        <span class="jargon-summary-badge">Session Summary</span>
-        <div class="jargon-summary-actions">
+      <div class="jargon-toast-top" style="margin-bottom: 8px;">
+        <svg class="jargon-toast-icon" width="20" height="20" viewBox="0 0 48 48" fill="currentColor">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M18.5 6C10.4919 6 4 12.4919 4 20.5C4 38.5 28 42 28 42V35H29.5C37.5081 35 44 28.5081 44 20.5C44 12.4919 37.5081 6 29.5 6H18.5ZM24 23.5C25.3807 23.5 26.5 22.3807 26.5 21C26.5 19.6193 25.3807 18.5 24 18.5C22.6193 18.5 21.5 19.6193 21.5 21C21.5 22.3807 22.6193 23.5 24 23.5ZM34.5 21C34.5 22.3807 33.3807 23.5 32 23.5C30.6193 23.5 29.5 22.3807 29.5 21C29.5 19.6193 30.6193 18.5 32 18.5C33.3807 18.5 34.5 19.6193 34.5 21ZM16 23.5C17.3807 23.5 18.5 22.3807 18.5 21C18.5 19.6193 17.3807 18.5 16 18.5C14.6193 18.5 13.5 19.6193 13.5 21C13.5 22.3807 14.6193 23.5 16 23.5Z" />
+        </svg>
+        <div class="jargon-toast-original">Session Summary</div>
+        <div class="jargon-summary-actions" style="margin-left: auto;">
           <button class="jargon-summary-copy" title="Copy to clipboard">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <rect x="9" y="9" width="13" height="13" rx="2"/>
@@ -168,7 +190,8 @@ if (!window._jargonInitialised) {
           <button class="jargon-summary-close" title="Dismiss">✕</button>
         </div>
       </div>
-      <div class="jargon-summary-body">${escapeHtml(summary).replace(/\n/g, '<br>')}</div>
+      <div class="jargon-toast-divider"></div>
+      <div class="jargon-toast-translation jargon-summary-body" style="border-top: none; padding-top: 0;">${escapeHtml(summary).replace(/\n/g, '<br>')}</div>
     `;
 
     // Copy button

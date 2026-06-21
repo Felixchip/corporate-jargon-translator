@@ -21,12 +21,40 @@
     return div.innerHTML;
   }
 
-  function showToast(original, translation) {
+  function getThemeClass() {
+    try {
+      const bgColor = window.getComputedStyle(document.body).backgroundColor;
+      const rgbMatch = bgColor.match(/\d+/g);
+      if (rgbMatch && rgbMatch.length >= 3) {
+        // Ignore fully transparent backgrounds (assume white/light)
+        if (rgbMatch.length === 4 && parseFloat(rgbMatch[3]) === 0) {
+          return 'jargon-theme-dark';
+        }
+        const r = parseInt(rgbMatch[0], 10);
+        const g = parseInt(rgbMatch[1], 10);
+        const b = parseInt(rgbMatch[2], 10);
+        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+        return yiq >= 128 ? 'jargon-theme-dark' : 'jargon-theme-light';
+      }
+    } catch (e) {}
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches 
+      ? 'jargon-theme-light' 
+      : 'jargon-theme-dark';
+  }
+
+  function showToast(original, translation, sourceTabId) {
     const container = ensureToastContainer();
     if (!container) return;
 
     const toast = document.createElement('div');
-    toast.className = 'jargon-toast';
+    toast.className = `jargon-toast ${getThemeClass()}`;
+    
+    if (sourceTabId) {
+      toast.addEventListener('click', () => {
+        chrome.runtime.sendMessage({ type: 'FOCUS_TAB', tabId: sourceTabId });
+      });
+    }
+
     toast.innerHTML = `
       <div class="jargon-toast-top">
         <svg class="jargon-toast-icon" width="20" height="20" viewBox="0 0 48 48" fill="currentColor">
@@ -58,7 +86,7 @@
     if (message.type === 'BROADCAST_TOAST') {
       message.translations.forEach(tr => {
         if (!tr || !tr.original || !tr.translation) return;
-        showToast(tr.original, tr.translation);
+        showToast(tr.original, tr.translation, message.sourceTabId);
       });
       sendResponse({ success: true });
     }

@@ -36,28 +36,22 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           const errText = await res.text().catch(() => 'No error body');
           return { error: `Server error ${res.status}: ${errText}` };
         }
-      })
       .then(data => {
         if (data && data.translations && data.translations.length > 0) {
+          const sourceTabId = _sender?.tab?.id;
           chrome.tabs.query({}, (tabs) => {
             tabs.forEach(t => {
-              chrome.tabs.sendMessage(t.id, { 
+              const msg = { 
                 type: 'BROADCAST_TOAST', 
-                translations: data.translations 
-              }).catch(async () => {
-                // If message fails, the tab probably didn't get the content script (e.g. it was already open)
+                translations: data.translations,
+                sourceTabId: sourceTabId
+              };
+              chrome.tabs.sendMessage(t.id, msg).catch(async () => {
                 try {
-                  // Inject CSS and JS dynamically
                   await chrome.scripting.insertCSS({ target: { tabId: t.id }, files: ['content/content.css'] }).catch(()=>{});
                   await chrome.scripting.executeScript({ target: { tabId: t.id }, files: ['content/receiver.js'] });
-                  // Retry sending the message
-                  chrome.tabs.sendMessage(t.id, { 
-                    type: 'BROADCAST_TOAST', 
-                    translations: data.translations 
-                  }).catch(() => {});
-                } catch (e) {
-                  // Ignore errors for tabs like chrome:// or edge://
-                }
+                  chrome.tabs.sendMessage(t.id, msg).catch(() => {});
+                } catch (e) {}
               });
             });
           });
@@ -66,6 +60,19 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       })
       .catch((err) => sendResponse({ error: `Fetch failed: ${err.message}` }));
 
+    return true;
+  }
+
+  if (message.type === 'FOCUS_TAB') {
+    if (message.tabId) {
+      chrome.tabs.get(message.tabId, (tab) => {
+        if (tab) {
+          chrome.tabs.update(tab.id, { active: true });
+          chrome.windows.update(tab.windowId, { focused: true });
+        }
+      });
+    }
+    sendResponse({ success: true });
     return true;
   }
 
