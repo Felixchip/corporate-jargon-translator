@@ -44,7 +44,21 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
               chrome.tabs.sendMessage(t.id, { 
                 type: 'BROADCAST_TOAST', 
                 translations: data.translations 
-              }).catch(() => {});
+              }).catch(async () => {
+                // If message fails, the tab probably didn't get the content script (e.g. it was already open)
+                try {
+                  // Inject CSS and JS dynamically
+                  await chrome.scripting.insertCSS({ target: { tabId: t.id }, files: ['content/content.css'] }).catch(()=>{});
+                  await chrome.scripting.executeScript({ target: { tabId: t.id }, files: ['content/receiver.js'] });
+                  // Retry sending the message
+                  chrome.tabs.sendMessage(t.id, { 
+                    type: 'BROADCAST_TOAST', 
+                    translations: data.translations 
+                  }).catch(() => {});
+                } catch (e) {
+                  // Ignore errors for tabs like chrome:// or edge://
+                }
+              });
             });
           });
         }
