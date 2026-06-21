@@ -35,14 +35,11 @@ body {
 .card-container {
   width: 100%;
   max-width: 440px;
-  background: rgba(255, 255, 255, 0.02);
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: #1c1c1e;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 28px;
   padding: 40px 32px 48px;
-  box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.8), 
-              0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
   position: relative;
   z-index: 1;
   display: flex;
@@ -50,7 +47,7 @@ body {
   align-items: center;
 }
 
-/* Blue aura inside the card */
+/* Very subtle teal hint on the left edge only */
 .card-glow {
   position: absolute;
   top: 0;
@@ -58,24 +55,23 @@ body {
   width: 100%;
   height: 100%;
   border-radius: 28px;
-  background: radial-gradient(circle at 10% 30%, rgba(52, 212, 168, 0.06), transparent 50%);
-  box-shadow: inset 2px 0 20px -5px rgba(52, 212, 168, 0.15);
+  box-shadow: inset 1px 0 0 rgba(52, 212, 168, 0.12);
   pointer-events: none;
   z-index: 0;
 }
 
-/* Subtle grid pattern inside card */
+/* Faint dot grid fading out towards the bottom */
 .card-grid {
   position: absolute;
   inset: 0;
   border-radius: 28px;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-  background-size: 14px 14px;
-  opacity: 0.3;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 18px 18px;
+  opacity: 1;
   pointer-events: none;
   z-index: 0;
-  mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%);
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 50%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 50%);
 }
 
 #main-state, #success-state {
