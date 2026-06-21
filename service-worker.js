@@ -36,6 +36,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           const errText = await res.text().catch(() => 'No error body');
           return { error: `Server error ${res.status}: ${errText}` };
         }
+      })
       .then(data => {
         if (data && data.translations && data.translations.length > 0) {
           const sourceTabId = _sender?.tab?.id;
