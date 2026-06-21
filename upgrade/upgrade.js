@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const mainState = document.getElementById('main-state');
   const successState = document.getElementById('success-state');
-  const closeBtn = document.getElementById('close-btn');
 
   const tweetText = "installed the extension by @misterxchip that translates corporate jargon into what people actually mean, live, during meetings.\nit has not been kind to my manager.";
   
@@ -42,9 +41,5 @@ document.addEventListener('DOMContentLoaded', () => {
       errorMessage.textContent = 'Please enter a valid X (Twitter) status URL.';
       errorMessage.style.display = 'block';
     }
-  });
-
-  closeBtn.addEventListener('click', () => {
-    window.close();
   });
 });
