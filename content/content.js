@@ -226,7 +226,6 @@ if (!window._jargonInitialised) {
           if (!tr || !tr.original || !tr.translation) return;
           // Store for summary
           window._jargonTranslations.push({ original: tr.original, translation: tr.translation });
-          showToast(tr.original, tr.translation);
         });
       } else {
         console.log('[Jargon] No jargon detected in response');
