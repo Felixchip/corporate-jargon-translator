@@ -28,7 +28,7 @@
 
   "web_accessible_resources": [
     {
-      "resources": ["upgrade/*"],
+      "resources": ["upgrade/*", "microphone/*"],
       "matches": ["<all_urls>"]
     }
   ],

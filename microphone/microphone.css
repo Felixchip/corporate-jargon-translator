@@ -1,0 +1,310 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #050505;
+  color: #ffffff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 40px 24px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Light ray hitting from top left */
+.light-ray {
+  position: absolute;
+  top: -20%;
+  left: -20%;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(ellipse 60% 80% at top left, rgba(255, 255, 255, 0.08) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+  transform: rotate(-15deg);
+}
+
+.card-container {
+  width: 100%;
+  max-width: 440px;
+  background: linear-gradient(160deg, #272729 0%, #1a1a1c 55%, #141416 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 28px;
+  padding: 40px 32px 48px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Very subtle teal hint on the left edge only */
+.card-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 28px;
+  box-shadow: inset 1px 0 0 rgba(52, 212, 168, 0.12);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Faint dot grid fading out towards the bottom */
+.card-grid {
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 18px 18px;
+  opacity: 1;
+  pointer-events: none;
+  z-index: 0;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 50%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 50%);
+}
+
+#main-state, #success-state {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Progress bars – sits just below the icon, matching its width */
+.progress-bars {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 5px;
+  width: 64px; /* match icon-wrapper */
+  margin-bottom: 24px;
+}
+
+.bar {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.bar.active {
+  background: #34d4a8;
+  box-shadow: 0 0 8px rgba(52, 212, 168, 0.5);
+}
+
+/* Central Icon (Folder) */
+.icon-wrapper {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 12px; /* smaller gap — progress bars sit below */
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-layer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+}
+
+.icon-layer.shadow {
+  background: rgba(0, 0, 0, 0.4);
+  transform: translateY(4px);
+  filter: blur(4px);
+}
+
+.icon-layer.folder {
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.icon-layer.folder svg {
+  opacity: 0.8;
+}
+
+h1 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+  text-align: center;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #888888;
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 32px;
+}
+
+/* Option Rows */
+.options-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.option-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.option-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.option-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #aaaaaa;
+  /* no background or border-radius — plain icon only */
+}
+
+.option-text {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.option-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.option-desc {
+  font-size: 13px;
+  color: #777777;
+}
+
+/* The right-side action button in the row */
+.option-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaaaaa;
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+  background: none;
+  border: none;
+}
+
+.option-row:hover .option-action {
+  color: #ffffff;
+}
+
+/* Input Row Specifics */
+.input-row {
+  cursor: default;
+}
+.input-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.03);
+}
+
+.option-input-wrapper input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  padding: 4px 0 0 0;
+}
+
+.option-input-wrapper input::placeholder {
+  color: #555555;
+}
+
+.verify-action {
+  cursor: pointer;
+}
+
+.verify-action:not(:disabled) {
+  background: #34d4a8;
+  border-color: #34d4a8;
+  color: #000;
+  box-shadow: 0 0 10px rgba(52, 212, 168, 0.3);
+}
+
+.verify-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #f87171;
+  font-size: 13px;
+  margin-top: 16px;
+  text-align: center;
+  display: none;
+}
+
+
+/* Success State Specifics */
+.success-wrapper .folder {
+  background: rgba(52, 212, 168, 0.1);
+  border-color: rgba(52, 212, 168, 0.2);
+  color: #34d4a8;
+}
+
+/* Footer – sits below the card naturally */
+.upgrade-footer {
+  margin-top: 20px;
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+  font-size: 13px;
+  color: #555555;
+}
+
+.upgrade-footer a {
+  color: #777777;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.upgrade-footer a:hover {
+  color: #ffffff;
+}

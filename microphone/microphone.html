@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Microphone Permission</title>
+  <link rel="stylesheet" href="microphone.css">
+</head>
+<body>
+  <div class="light-ray"></div>
+  <div class="card-container">
+    <div class="card-glow"></div>
+    <div class="card-grid"></div>
+
+    <!-- Main Content State -->
+    <div id="main-state">
+      <div class="icon-wrapper">
+        <div class="icon-layer shadow"></div>
+        <div class="icon-layer folder">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" x2="12" y1="19" y2="22"/>
+            <line x1="8" x2="16" y1="22" y2="22"/>
+          </svg>
+        </div>
+      </div>
+
+      <h1>Microphone Access</h1>
+      <p class="subtitle">The Corporate Jargon Translator needs<br>your microphone to listen to meetings.</p>
+
+      <div class="options-list">
+        <!-- Allow button -->
+        <button id="allow-btn" class="option-row">
+          <div class="option-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#34d4a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+              <path d="m9 12 2 2 4-4"></path>
+            </svg>
+          </div>
+          <div class="option-text">
+            <span class="option-title">Allow Microphone</span>
+            <span class="option-desc">Grant access to start translating</span>
+          </div>
+          <div class="option-action">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </div>
+        </button>
+      </div>
+      
+      <div id="error-message" class="error-message"></div>
+    </div>
+
+    <!-- Success State -->
+    <div id="success-state" class="success-state" style="display: none;">
+      <div class="icon-wrapper success-wrapper">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      </div>
+      <h1>Access Granted!</h1>
+      <p class="subtitle">Your microphone is ready.<br>You can close this tab and return to your meeting.</p>
+    </div>
+  </div>
+
+  <div class="upgrade-footer">
+    Made with no BS by <a href="https://felixobinna.com" target="_blank" rel="noopener noreferrer">Felix Obinna</a>
+  </div>
+
+  <script src="microphone.js"></script>
+</body>
+</html>
