@@ -300,6 +300,10 @@ if (!window._jargonInitialised) {
       if (msg.isListening) window._jargonHasSession = true;
       updateButtonUI();
     }
+    if (msg.type === 'TOGGLE_UI') {
+      const host = document.getElementById('jargon-shadow-host');
+      if (!host) createFloatingUI();
+    }
   });
 
   // ─── Summarize ─────────────────────────────────────────────────────────

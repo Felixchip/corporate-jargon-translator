@@ -15,9 +15,8 @@ async function ensureOffscreen() {
       justification: 'Speech recognition requires microphone access'
     });
     offscreenCreated = true;
-    console.log('[Jargon SW] Offscreen document created');
   } catch (e) {
-    console.error('[Jargon SW] Failed to create offscreen:', e.message);
+    console.error('[Jargon SW] Offscreen create failed:', e.message);
   }
 }
 
@@ -26,7 +25,6 @@ async function removeOffscreen() {
   try {
     await chrome.offscreen.closeDocument();
     offscreenCreated = false;
-    console.log('[Jargon SW] Offscreen document removed');
   } catch (e) {
     offscreenCreated = false;
   }
@@ -45,20 +43,15 @@ function broadcast(msg) {
 // ─── Translation API ───────────────────────────────────────────────────────
 
 async function translateAndBroadcast(text) {
-  console.log('[Jargon SW] Translating:', text);
   try {
     const res = await fetch(`${BACKEND_URL}/api/translate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text })
     });
-    if (!res.ok) {
-      console.error('[Jargon SW] API error:', res.status);
-      return;
-    }
+    if (!res.ok) return;
     const data = await res.json();
     if (data.translations?.length > 0) {
-      // Store in session
       chrome.storage.local.get(['sessionTranslations'], (result) => {
         const current = result.sessionTranslations || [];
         chrome.storage.local.set({ sessionTranslations: [...current, ...data.translations] });
@@ -70,16 +63,29 @@ async function translateAndBroadcast(text) {
   }
 }
 
+// ─── Icon Click → Toggle UI on active tab ──────────────────────────────────
+
+chrome.action.onClicked.addListener((tab) => {
+  chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_UI' }).catch(async () => {
+    // Content script not injected yet — inject it
+    try {
+      await chrome.scripting.insertCSS({ target: { tabId: tab.id }, files: ['content/content.css'] }).catch(() => {});
+      await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content/content.js'] });
+      chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_UI' }).catch(() => {});
+    } catch (e) {}
+  });
+});
+
 // ─── Message Handler ───────────────────────────────────────────────────────
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   // Content script → start listening
   if (msg.type === 'START_LISTENING') {
-    console.log('[Jargon SW] START_LISTENING');
     isListening = true;
     ensureOffscreen().then(() => {
-      chrome.runtime.sendMessage({ type: 'START_LISTENING' });
+      // Send to offscreen ONLY — use different message type to avoid self-loop
+      chrome.runtime.sendMessage({ type: 'OFFSCREEN_START' });
       broadcast({ type: 'UI_STATE', isListening: true });
     });
     sendResponse({ ok: true });
@@ -88,9 +94,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   // Content script → stop listening
   if (msg.type === 'STOP_LISTENING') {
-    console.log('[Jargon SW] STOP_LISTENING');
     isListening = false;
-    chrome.runtime.sendMessage({ type: 'STOP_LISTENING' }).catch(() => {});
+    chrome.runtime.sendMessage({ type: 'OFFSCREEN_STOP' }).catch(() => {});
     removeOffscreen();
     broadcast({ type: 'UI_STATE', isListening: false });
     sendResponse({ ok: true });
@@ -99,20 +104,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   // Offscreen → transcript ready
   if (msg.type === 'TRANSCRIPT') {
-    console.log('[Jargon SW] TRANSCRIPT:', msg.text);
     translateAndBroadcast(msg.text);
     return true;
   }
 
-  // Offscreen → started successfully
+  // Offscreen → started
   if (msg.type === 'OFFSCREEN_STARTED') {
-    console.log('[Jargon SW] Offscreen started');
     return true;
   }
 
   // Offscreen → error
   if (msg.type === 'OFFSCREEN_ERROR') {
-    console.error('[Jargon SW] Offscreen error:', msg.error);
     if (msg.error === 'not-allowed' || msg.error === 'service-not-allowed') {
       isListening = false;
       broadcast({ type: 'UI_STATE', isListening: false });
@@ -129,11 +131,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     })
       .then(async res => {
         if (res.ok) return res.json();
-        const errText = await res.text().catch(() => 'No error body');
-        return { error: `Server error ${res.status}: ${errText}` };
+        const errText = await res.text().catch(() => '');
+        return { error: `Server error ${res.status}` };
       })
       .then(data => sendResponse(data))
-      .catch((err) => sendResponse({ error: `Fetch failed: ${err.message}` }));
+      .catch((err) => sendResponse({ error: err.message }));
     return true;
   }
 

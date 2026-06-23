@@ -106,13 +106,13 @@ function stopRecognition() {
 }
 
 chrome.runtime.onMessage.addListener((msg) => {
-  if (msg.type === 'START_LISTENING') {
+  if (msg.type === 'OFFSCREEN_START') {
     isListening = true;
     buffer = '';
     seen.clear();
     startRecognition();
   }
-  if (msg.type === 'STOP_LISTENING') {
+  if (msg.type === 'OFFSCREEN_STOP') {
     stopRecognition();
   }
 });
