@@ -232,6 +232,9 @@ if (!window._jargonInitialised) {
     updateButtonUI();
   }
 
+  // Store on window so it persists across re-injections
+  window._jargonCreateUI = createFloatingUI;
+
   // ─── Toggle Listening ──────────────────────────────────────────────────
 
   function toggleListening() {
@@ -421,4 +424,6 @@ if (!window._jargonInitialised) {
 }
 
 // Always re-create UI on injection (handles SPA navigations)
-createFloatingUI();
+if (typeof window._jargonCreateUI === 'function') {
+  window._jargonCreateUI();
+}
