@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — Cut the BS</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 720px;
+      margin: 60px auto;
+      padding: 0 24px;
+      line-height: 1.7;
+      color: #1a1a1a;
+    }
+    h1 { font-size: 2rem; margin-bottom: 4px; }
+    h2 { font-size: 1.2rem; margin-top: 40px; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+    p, li { font-size: 1rem; }
+    .updated { color: #666; font-size: 0.9rem; margin-top: 0; }
+    a { color: #0066ff; }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+  <p class="updated">Last updated: 2026-06-21</p>
+  <p>This Privacy Policy describes how <strong>Cut the BS</strong> (the "Extension") handles your data. We take your privacy seriously and have designed the Extension to collect as little data as possible.</p>
+
+  <h2>What Data Is Collected</h2>
+  <p>The Extension collects and processes the following data:</p>
+  <ul>
+    <li><strong>Spoken audio (microphone input)</strong> — When you click the "Translate the BS" button and grant microphone permission, the Extension uses the Web Speech API (built into Chrome) to convert your speech to text entirely on-device. No audio is recorded or transmitted.</li>
+    <li><strong>Speech transcript text</strong> — The on-device transcript text is sent to our backend server (<code>corporate-jargon-translator-production.up.railway.app</code>) solely to identify and translate corporate jargon phrases. The text is processed in real time and is not stored after the response is returned.</li>
+    <li><strong>Usage count</strong> — The number of times you have used the translation feature is stored locally using <code>chrome.storage.local</code> on your device only. This is used to enforce the free-tier usage limit. This data is never transmitted off your device.</li>
+    <li><strong>Premium status</strong> — If you upgrade, a flag indicating premium status is stored locally using <code>chrome.storage.local</code>. This is never transmitted off your device.</li>
+  </ul>
+
+  <h2>What Data Is NOT Collected</h2>
+  <ul>
+    <li>We do not collect your name, email, or any personally identifiable information.</li>
+    <li>We do not track which websites you visit.</li>
+    <li>We do not record or store your audio.</li>
+    <li>We do not use cookies, analytics, or advertising trackers.</li>
+    <li>We do not sell or share any data with third parties.</li>
+  </ul>
+
+  <h2>How Data Is Used</h2>
+  <p>Speech transcript text is sent to our server for the sole purpose of detecting corporate jargon and returning plain-English translations to you. Transcripts are not logged, stored, or used for any other purpose.</p>
+
+  <h2>Third-Party Services</h2>
+  <p>The Extension uses the following third-party services:</p>
+  <ul>
+    <li><strong>Web Speech API</strong> — Provided by Chrome/Google. Speech-to-text conversion happens on-device. Google's standard privacy policy applies to Chrome's built-in APIs. See <a href="https://policies.google.com/privacy" target="_blank">Google's Privacy Policy</a>.</li>
+    <li><strong>Railway.app</strong> — Our backend server is hosted on Railway. Transcript text is sent to this server over HTTPS and is not retained. See <a href="https://railway.app/legal/privacy" target="_blank">Railway's Privacy Policy</a>.</li>
+  </ul>
+
+  <h2>Data Sharing</h2>
+  <p>We do not sell, trade, or otherwise transfer your data to any third parties. Transcript text sent to our server is used only to generate a translation and is discarded immediately after.</p>
+
+  <h2>Data Retention and Deletion</h2>
+  <p>All locally stored data (usage count, premium status) is stored in your browser and can be cleared at any time by removing the Extension or clearing the Extension's storage via Chrome's developer tools. Transcript text sent to our server is not retained after the response is returned.</p>
+
+  <h2>Changes to This Policy</h2>
+  <p>We may update this policy if our data practices change. The "Last updated" date at the top of this page will reflect any changes. Continued use of the Extension after changes constitutes acceptance of the updated policy.</p>
+
+  <h2>Contact</h2>
+  <p>If you have questions or concerns about this privacy policy, please contact us at: <a href="mailto:support@corporatejargontranslator.com">support@corporatejargontranslator.com</a></p>
+</body>
+</html>

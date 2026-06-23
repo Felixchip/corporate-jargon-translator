@@ -1,7 +1,7 @@
 {
   "name": "jargon-translator-api",
   "version": "1.0.0",
-  "description": "Backend API for Corporate Jargon Translator",
+  "description": "Backend API for Cut the BS",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

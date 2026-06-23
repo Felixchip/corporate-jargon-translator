@@ -39,6 +39,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       })
       .then(data => {
         if (data && data.translations && data.translations.length > 0) {
+          chrome.storage.local.get(['sessionTranslations'], (result) => {
+            const current = result.sessionTranslations || [];
+            const updated = [...current, ...data.translations];
+            chrome.storage.local.set({ sessionTranslations: updated });
+          });
+
           const sourceTabId = _sender?.tab?.id;
           chrome.tabs.query({}, (tabs) => {
             tabs.forEach(t => {

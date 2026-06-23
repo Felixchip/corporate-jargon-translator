@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "Corporate Jargon Translator",
-  "version": "2.0.7",
-  "description": "Floating jargon translator that watches your meetings.",
+  "name": "Cut the BS",
+  "version": "1.0.0",
+  "description": "Real-time corporate jargon translator. Click the icon, speak freely, and watch the BS get decoded — live, on any page.",
 
   "permissions": [
     "storage",
     "scripting",
-    "activeTab"
+    "activeTab",
+    "tabs"
   ],
 
   "host_permissions": [
@@ -34,7 +35,7 @@
   ],
 
   "action": {
-    "default_title": "Corporate Jargon Translator",
+    "default_title": "Cut the BS",
     "default_icon": {
       "16": "icons/icon-16.png",
       "48": "icons/icon-48.png",

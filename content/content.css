@@ -10,7 +10,7 @@
 }
 
 .jargon-toast {
-  background: rgba(120, 120, 125, 0.4);
+  background: rgba(24, 24, 27, 0.95);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   color: #ffffff;
@@ -72,7 +72,7 @@
 
 .jargon-toast.jargon-theme-light,
 .jargon-summary-card.jargon-theme-light {
-  background: rgba(230, 230, 235, 0.75);
+  background: rgba(244, 244, 245, 0.95);
   color: #18181b;
   border: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1), 
@@ -94,39 +94,7 @@
   color: #2563eb;
 }
 
-/* ─── Summarize Button ──────────────────────────────────────────────────── */
 
-#jargon-summarize-btn {
-  position: fixed;
-  bottom: 104px;
-  right: 32px;
-  z-index: 2147483647;
-  height: 54px;
-  padding: 0 26px;
-  border-radius: 9999px;
-  background: #ffffff;
-  color: #000000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  box-shadow: 0 0 0 8px rgba(120, 120, 125, 0.4), 0 8px 20px rgba(0, 0, 0, 0.2);
-  border: none;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  user-select: none;
-  opacity: 0;
-  transform: translateY(8px);
-  animation: jargon-summarize-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#jargon-summarize-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 0 10px rgba(120, 120, 125, 0.5), 0 12px 25px rgba(0, 0, 0, 0.25);
-}
 
 /* ─── Summary Card ──────────────────────────────────────────────────────── */
 
@@ -137,7 +105,7 @@
   z-index: 2147483647;
   width: 400px;
   max-height: 70vh;
-  background: rgba(120, 120, 125, 0.4);
+  background: rgba(24, 24, 27, 0.95);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -211,67 +179,8 @@
   border-radius: 4px;
 }
 
-#jargon-floating-btn {
-  position: fixed;
-  bottom: 32px;
-  right: 32px;
-  z-index: 2147483647;
-  height: 54px;
-  padding: 0 26px;
-  border-radius: 9999px;
-  background: linear-gradient(90deg, #0066ff, #60a5fa);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  cursor: pointer;
-  box-shadow: 0 0 0 8px rgba(96, 165, 250, 0.35), 0 8px 20px rgba(0, 0, 0, 0.2);
-  border: none;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  user-select: none;
-}
+/* Floating widget lives in a Shadow DOM — see createFloatingUI() in content.js */
 
-#jargon-floating-btn:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 0 0 10px rgba(96, 165, 250, 0.4), 0 12px 25px rgba(0, 0, 0, 0.25);
-}
-
-#jargon-floating-btn:active {
-  transform: translateY(1px) scale(0.98);
-  box-shadow: 0 0 0 6px rgba(96, 165, 250, 0.4), 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-#jargon-floating-btn.listening {
-  background: linear-gradient(90deg, #ff0000, #ff4b4b);
-  box-shadow: 0 0 0 8px rgba(255, 75, 75, 0.35), 0 8px 20px rgba(0, 0, 0, 0.2);
-  animation: jargon-pulse-glow-red 2.5s infinite;
-}
-
-#jargon-floating-btn.listening:hover {
-  box-shadow: 0 0 0 10px rgba(255, 75, 75, 0.4), 0 12px 25px rgba(0, 0, 0, 0.25);
-}
-.jargon-btn-label {
-  white-space: nowrap;
-}
-
-/* Icons */
-.jargon-mic, .jargon-stop {
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
-  transition: transform 0.2s ease;
-}
-
-#jargon-floating-btn:hover .jargon-mic {
-  transform: scale(1.1);
-}
-
-#jargon-floating-btn.listening .jargon-stop {
-  animation: jargon-stop-shake 1.5s ease infinite;
-}
 
 /* Animations */
 @keyframes jargon-gradient-flow {
