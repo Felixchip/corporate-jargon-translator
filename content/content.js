@@ -1,29 +1,24 @@
-// Core logic is set up only once per window lifetime.
-// But createFloatingUI() is always called on every injection so the button
-// is restored after YouTube SPA navigations tear out the DOM.
+// content.js — UI only. Speech recognition lives in offscreen document.
+// This script creates the floating button and handles toast display.
+
 if (!window._jargonInitialised) {
   window._jargonInitialised = true;
-
-  window._jargonListening     = false;
-  window._jargonHasSession    = false; // true after first session ends
-  window._jargonRec           = null;
-  window._jargonSeen          = new Set();
-  window._jargonBuffer        = '';
-  window._jargonTimer         = null;
-  window._jargonTranslations  = [];
+  window._jargonListening = false;
+  window._jargonHasSession = false;
 
   // ─── UI ────────────────────────────────────────────────────────────────
 
-  window._jargonCreateUI = function createFloatingUI() {
-    if (!document.getElementById('jargon-toast-container')) {
-      const toastContainer = document.createElement('div');
-      toastContainer.id = 'jargon-toast-container';
-      document.body.appendChild(toastContainer);
-    }
-
+  function createFloatingUI() {
     if (document.getElementById('jargon-shadow-host')) return;
 
-    // Create a fixed-position host element — the only thing the page can style
+    // Toast container
+    if (!document.getElementById('jargon-toast-container')) {
+      const tc = document.createElement('div');
+      tc.id = 'jargon-toast-container';
+      document.body.appendChild(tc);
+    }
+
+    // Shadow DOM host
     const host = document.createElement('div');
     host.id = 'jargon-shadow-host';
     Object.assign(host.style, {
@@ -32,16 +27,13 @@ if (!window._jargonInitialised) {
       right: '32px',
       zIndex: '2147483647',
       width: '320px',
-      height: 'auto',
       pointerEvents: 'auto',
-      display: 'block',
       border: 'none',
       background: 'none',
       padding: '0',
       margin: '0',
     });
 
-    // Attach a shadow root — fully isolated from host-page CSS
     const shadow = host.attachShadow({ mode: 'open' });
 
     shadow.innerHTML = `
@@ -119,7 +111,7 @@ if (!window._jargonInitialised) {
           border-radius: 9999px;
           background: #ffffff;
           color: #000000;
-          display: flex;
+          display: none;
           align-items: center;
           justify-content: center;
           cursor: pointer;
@@ -136,11 +128,6 @@ if (!window._jargonInitialised) {
           transform: translateY(-2px) scale(1.02);
           border-color: rgba(255,255,255,0.25);
           box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-        }
-        #jargon-floating-summarize-btn:active {
-          transform: translateY(1px) scale(0.98);
-          border-color: rgba(255,255,255,0.22);
-          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         #jargon-floating-btn {
@@ -240,60 +227,44 @@ if (!window._jargonInitialised) {
       host.remove();
     });
 
-    // Store shadow reference for updateButtonUI
     window._jargonShadow = shadow;
-
     document.body.appendChild(host);
     updateButtonUI();
-    console.log('[Jargon] UI created (shadow DOM)');
-  };
+  }
 
-  // Re-attach UI after YouTube SPA navigation replaces the page body
-  window.addEventListener('yt-navigate-finish', () => {
-    console.log('[Jargon] yt-navigate-finish — re-attaching UI');
-    window._jargonShadow = null;
-    window._jargonCreateUI();
-  });
+  // ─── Toggle Listening ──────────────────────────────────────────────────
 
   function toggleListening() {
     if (window._jargonListening) {
       window._jargonListening = false;
-      window._jargonHasSession = true; // unlock Summarize button
-      console.log('[Jargon] toggleListening → listening: false');
+      window._jargonHasSession = true;
       updateButtonUI();
-      stopSpeech();
+      chrome.runtime.sendMessage({ type: 'STOP_LISTENING' });
       return;
     }
 
-    // Check usage limits before starting
+    // Check usage limits
     chrome.storage.local.get(['usageCount', 'isPremium'], (data) => {
       const isPremium = data.isPremium || false;
       const count = data.usageCount || 0;
 
       if (!isPremium && count >= 3) {
-        console.log('[Jargon] Usage limit reached. Opening upgrade page.');
         window.open(chrome.runtime.getURL('upgrade/upgrade.html'), '_blank');
         return;
       }
 
-      // Increment count for non-premium users
       if (!isPremium) {
         chrome.storage.local.set({ usageCount: count + 1 });
       }
 
       window._jargonListening = true;
-      console.log('[Jargon] toggleListening → listening: true (usage count:', count + 1, ')');
       updateButtonUI();
-      
-      // Clear translations for new session in local storage
       chrome.storage.local.set({ sessionTranslations: [] });
-      window._jargonSeen.clear();
-      // Reset buffer on explicit user start
-      window._jargonBuffer = '';
-      clearTimeout(window._jargonTimer);
-      startSpeech();
+      chrome.runtime.sendMessage({ type: 'START_LISTENING' });
     });
   }
+
+  // ─── Button State ──────────────────────────────────────────────────────
 
   function updateButtonUI() {
     const root = window._jargonShadow || document;
@@ -314,10 +285,21 @@ if (!window._jargonInitialised) {
       mic.style.display  = 'block';
       stop.style.display = 'none';
       label.textContent  = 'Translate the BS';
-      // Only show Summarize if user has completed at least one session
       if (sumBtn) sumBtn.style.display = window._jargonHasSession ? 'flex' : 'none';
     }
   }
+
+  // ─── Listen for state changes from service worker ──────────────────────
+
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg.type === 'UI_STATE') {
+      window._jargonListening = msg.isListening;
+      if (msg.isListening) window._jargonHasSession = true;
+      updateButtonUI();
+    }
+  });
+
+  // ─── Summarize ─────────────────────────────────────────────────────────
 
   async function summarizeSession() {
     const root = window._jargonShadow || document;
@@ -330,7 +312,6 @@ if (!window._jargonInitialised) {
 
     chrome.storage.local.get(['sessionTranslations'], async (resObj) => {
       const translations = resObj.sessionTranslations || [];
-
       if (translations.length === 0) {
         if (btn) {
           btn.style.opacity = '1';
@@ -342,27 +323,18 @@ if (!window._jargonInitialised) {
       }
 
       try {
-        const data = await chrome.runtime.sendMessage({
-          type: 'SUMMARIZE',
-          translations: translations
-        });
-
+        const data = await chrome.runtime.sendMessage({ type: 'SUMMARIZE', translations });
         if (btn) {
           btn.style.opacity = '1';
           btn.style.pointerEvents = 'auto';
           btn.querySelector('.jargon-summarize-label').textContent = 'Summarize';
         }
-
-        if (data && data.summary) {
+        if (data?.summary) {
           showSummaryCard(data.summary);
-        } else if (data && data.error) {
-          console.error('[Jargon] Summarize error:', data.error);
-          showSummaryCard('Summary failed: ' + data.error);
         } else {
-          showSummaryCard('Summary failed: empty response');
+          showSummaryCard('Summary failed: ' + (data?.error || 'empty response'));
         }
       } catch (e) {
-        console.error('[Jargon] Summarize sendMessage threw:', e.message);
         if (btn) {
           btn.style.opacity = '1';
           btn.style.pointerEvents = 'auto';
@@ -371,6 +343,12 @@ if (!window._jargonInitialised) {
         showSummaryCard('Summary error: ' + e.message);
       }
     });
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   function getThemeClass() {
@@ -386,19 +364,17 @@ if (!window._jargonInitialised) {
         return yiq >= 128 ? 'jargon-theme-light' : 'jargon-theme-dark';
       }
     } catch (e) {}
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches 
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
       ? 'jargon-theme-dark' : 'jargon-theme-light';
   }
 
   function showSummaryCard(summary) {
-    // Remove existing summary card if any
     const existing = document.getElementById('jargon-summary-card');
     if (existing) existing.remove();
 
     const card = document.createElement('div');
     card.id = 'jargon-summary-card';
     card.className = `jargon-summary-card ${getThemeClass()}`;
-    
     card.innerHTML = `
       <div class="jargon-toast-top" style="margin-bottom: 8px;">
         <svg class="jargon-toast-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor">
@@ -413,25 +389,21 @@ if (!window._jargonInitialised) {
             </svg>
             Copy
           </button>
-          <button class="jargon-summary-close" title="Dismiss">✕</button>
+          <button class="jargon-summary-close" title="Dismiss">&#x2715;</button>
         </div>
       </div>
       <div class="jargon-toast-divider"></div>
       <div class="jargon-toast-translation jargon-summary-body" style="border-top: none; padding-top: 0;">${escapeHtml(summary).replace(/\n/g, '<br>')}</div>
     `;
 
-    // Copy button
     card.querySelector('.jargon-summary-copy').addEventListener('click', () => {
       navigator.clipboard.writeText(summary).then(() => {
         const copyBtn = card.querySelector('.jargon-summary-copy');
-        copyBtn.textContent = '✓ Copied';
-        setTimeout(() => {
-          copyBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
-        }, 2000);
+        copyBtn.textContent = '\u2713 Copied';
+        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
       });
     });
 
-    // Dismiss button
     card.querySelector('.jargon-summary-close').addEventListener('click', () => {
       card.classList.add('fade-out');
       card.addEventListener('animationend', () => card.remove());
@@ -440,170 +412,13 @@ if (!window._jargonInitialised) {
     document.body.appendChild(card);
   }
 
-  // ─── Translation ─────────────────────────────────────────────────────────
+  // ─── YouTube SPA re-attach ─────────────────────────────────────────────
 
-  async function translateAndShow(text) {
-    const t = text.trim();
-    if (!t) {
-      console.log('[Jargon] Skipped translate: text is empty');
-      return;
-    }
-    const key = t.toLowerCase();
-    if (window._jargonSeen.has(key)) {
-      console.log(`[Jargon] Skipped translate (already seen): "${t}"`);
-      return;
-    }
-    window._jargonSeen.add(key);
-    if (window._jargonSeen.size > 50) {
-      const first = window._jargonSeen.values().next().value;
-      window._jargonSeen.delete(first);
-    }
-    console.log('[Jargon] Sending translation request to service worker:', t);
-    try {
-      const data = await chrome.runtime.sendMessage({ type: 'TRANSLATE', text: t });
-      console.log('[Jargon] Received response from service worker:', JSON.stringify(data));
-      if (!data) {
-        console.error('[Jargon] Response from service worker was null/undefined');
-        return;
-      }
-      if (data.error) {
-        console.error('[Jargon] Service worker returned error:', data.error);
-        return;
-      }
-      if (data.translations?.length > 0) {
-        console.log('[Jargon] Jargon translations detected:', data.translations);
-      } else {
-        console.log('[Jargon] No jargon detected in response');
-      }
-    } catch (e) {
-      console.error('[Jargon] sendMessage threw error:', e.message);
-    }
-  }
-
-  // ─── Speech Recognition ───────────────────────────────────────────────────
-
-  function startSpeech() {
-    // Only reset session state on explicit user start, not on recognition restarts
-    // Buffer persists across onend restarts so partial sentences aren't lost
-
-    // Always tear down any previous instance before creating a new one.
-    if (window._jargonRec) {
-      const old = window._jargonRec;
-      old.onend = old.onerror = old.onresult = null;
-      try { old.stop(); } catch (_) {}
-      window._jargonRec = null;
-    }
-
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      console.error('[Jargon] SpeechRecognition not available');
-      return;
-    }
-
-    const rec = new SR();
-    window._jargonRec = rec;
-    rec.continuous     = true;
-    rec.interimResults = true;
-    rec.lang           = 'en-US';
-
-    rec.onresult = (e) => {
-      // Only process new results from e.resultIndex onwards
-      // e.results is cumulative — we only want the latest chunk
-      let latestInterim = '';
-      let lastFinal = '';
-
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const transcript = e.results[i][0].transcript;
-        if (e.results[i].isFinal) {
-          lastFinal += transcript;
-        } else {
-          latestInterim = transcript;
-        }
-      }
-
-      // If we got a final result, accumulate it into the buffer
-      if (lastFinal) {
-        window._jargonBuffer += (window._jargonBuffer ? ' ' : '') + lastFinal;
-      }
-
-      // Use the buffer + any live interim for the full picture
-      const fullText = (window._jargonBuffer + (latestInterim ? ' ' + latestInterim : '')).trim();
-      const words = fullText.split(/\s+/).filter(Boolean).length;
-
-      // Dynamic silence timeout based on sentence length
-      let timeoutMs = 1500;
-      if (words >= 15) {
-        timeoutMs = 800;
-      } else if (words >= 8) {
-        timeoutMs = 1200;
-      }
-
-      clearTimeout(window._jargonTimer);
-      window._jargonTimer = setTimeout(() => {
-        const sentence = window._jargonBuffer.trim();
-        window._jargonBuffer = '';
-        if (sentence && sentence.split(/\s+/).filter(Boolean).length >= 3 && window._jargonListening) {
-          console.log('[Jargon] Flushing sentence:', sentence);
-          translateAndShow(sentence);
-          // Do NOT restart speech — let it continue to capture the next sentence naturally
-        }
-      }, timeoutMs);
-    };
-
-    rec.onerror = (e) => {
-      console.warn('[Jargon] SpeechRecognition error:', e.error);
-      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-        window._jargonListening = false;
-        updateButtonUI();
-      }
-    };
-
-    rec.onend = () => {
-      console.log('[Jargon] onend — still listening:', window._jargonListening);
-      if (window._jargonListening) {
-        // Backoff if recognition dies too quickly (< 1s) to avoid tight loop on YouTube
-        const elapsed = Date.now() - (window._jargonRecStartTime || 0);
-        const delay = elapsed < 1000 ? 2000 : 500;
-        console.log('[Jargon] onend — restarting in', delay, 'ms');
-        setTimeout(() => {
-          if (window._jargonListening) startSpeech();
-        }, delay);
-      }
-    };
-
-    try {
-      window._jargonRecStartTime = Date.now();
-      rec.start();
-      console.log('[Jargon] SpeechRecognition started');
-    } catch (e) {
-      console.error('[Jargon] rec.start() threw:', e.message);
-      setTimeout(() => { if (window._jargonListening) startSpeech(); }, 1000);
-    }
-  }
-
-  function stopSpeech() {
-    const rec = window._jargonRec;
-    if (rec) {
-      rec.onend = rec.onerror = rec.onresult = null;
-      try { rec.stop(); } catch (_) {}
-      window._jargonRec = null;
-    }
-    clearTimeout(window._jargonTimer);
-    window._jargonBuffer     = '';
-  }
-
-  // ─── Toast ────────────────────────────────────────────────────────────────
-
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
-  // Toast rendering is now handled by receiver.js listening for BROADCAST_TOAST
+  window.addEventListener('yt-navigate-finish', () => {
+    window._jargonShadow = null;
+    createFloatingUI();
+  });
 }
 
-// Always called on every injection — restores the button if SPA navigation
-// removed it from the DOM, even though _jargonInitialised is already true.
-console.log('[Jargon] Script injected — creating UI if needed');
-window._jargonCreateUI();
+// Always re-create UI on injection (handles SPA navigations)
+createFloatingUI();
