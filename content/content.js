@@ -421,13 +421,5 @@ if (!window._jargonInitialised) {
 
   // ─── YouTube SPA re-attach ─────────────────────────────────────────────
 
-  window.addEventListener('yt-navigate-finish', () => {
-    window._jargonShadow = null;
-    createFloatingUI();
-  });
-}
-
-// Always re-create UI on injection (handles SPA navigations)
-if (typeof window._jargonCreateUI === 'function') {
-  window._jargonCreateUI();
+  // No auto-create — user clicks extension icon to show UI
 }
