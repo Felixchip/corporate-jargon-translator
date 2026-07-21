@@ -116,3 +116,6 @@ chrome.runtime.onMessage.addListener((msg) => {
     stopRecognition();
   }
 });
+
+// Signal that the offscreen document is ready to receive messages
+chrome.runtime.sendMessage({ type: 'OFFSCREEN_READY' });

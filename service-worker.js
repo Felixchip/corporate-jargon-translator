@@ -1,32 +1,35 @@
 const BACKEND_URL = 'https://corporate-jargon-translator-production.up.railway.app';
 const OFFSCREEN_URL = 'offscreen/offscreen.html';
 
-let isListening = false;
-let offscreenCreated = false;
+let pendingStart = false;
 
 // ─── Offscreen Document Management ─────────────────────────────────────────
 
 async function ensureOffscreen() {
-  if (offscreenCreated) return;
+  try {
+    const existing = await chrome.offscreen.hasDocument();
+    if (existing) return;
+  } catch (_) {}
+  
   try {
     await chrome.offscreen.createDocument({
       url: OFFSCREEN_URL,
       reasons: ['USER_MEDIA'],
       justification: 'Speech recognition requires microphone access'
     });
-    offscreenCreated = true;
   } catch (e) {
     console.error('[Jargon SW] Offscreen create failed:', e.message);
   }
 }
 
 async function removeOffscreen() {
-  if (!offscreenCreated) return;
   try {
-    await chrome.offscreen.closeDocument();
-    offscreenCreated = false;
+    const existing = await chrome.offscreen.hasDocument();
+    if (existing) {
+      await chrome.offscreen.closeDocument();
+    }
   } catch (e) {
-    offscreenCreated = false;
+    // Document might already be closed
   }
 }
 
@@ -67,7 +70,6 @@ async function translateAndBroadcast(text) {
 
 chrome.action.onClicked.addListener((tab) => {
   chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_UI' }).catch(async () => {
-    // Content script not injected yet — inject it
     try {
       await chrome.scripting.insertCSS({ target: { tabId: tab.id }, files: ['content/content.css'] }).catch(() => {});
       await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content/content.js'] });
@@ -80,21 +82,24 @@ chrome.action.onClicked.addListener((tab) => {
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
-  // Content script → start listening
-  if (msg.type === 'START_LISTENING') {
-    isListening = true;
-    ensureOffscreen().then(() => {
-      // Send to offscreen ONLY — use different message type to avoid self-loop
+  if (msg.type === 'OFFSCREEN_READY') {
+    if (pendingStart) {
+      pendingStart = false;
       chrome.runtime.sendMessage({ type: 'OFFSCREEN_START' });
-      broadcast({ type: 'UI_STATE', isListening: true });
-    });
+    }
+    return true;
+  }
+
+  if (msg.type === 'START_LISTENING') {
+    broadcast({ type: 'UI_STATE', isListening: true });
+    pendingStart = true;
+    ensureOffscreen();
     sendResponse({ ok: true });
     return true;
   }
 
-  // Content script → stop listening
   if (msg.type === 'STOP_LISTENING') {
-    isListening = false;
+    pendingStart = false;
     chrome.runtime.sendMessage({ type: 'OFFSCREEN_STOP' }).catch(() => {});
     removeOffscreen();
     broadcast({ type: 'UI_STATE', isListening: false });
@@ -102,27 +107,23 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
 
-  // Offscreen → transcript ready
   if (msg.type === 'TRANSCRIPT') {
     translateAndBroadcast(msg.text);
     return true;
   }
 
-  // Offscreen → started
   if (msg.type === 'OFFSCREEN_STARTED') {
     return true;
   }
 
-  // Offscreen → error
   if (msg.type === 'OFFSCREEN_ERROR') {
     if (msg.error === 'not-allowed' || msg.error === 'service-not-allowed') {
-      isListening = false;
+      pendingStart = false;
       broadcast({ type: 'UI_STATE', isListening: false });
     }
     return true;
   }
 
-  // Summarize
   if (msg.type === 'SUMMARIZE') {
     fetch(`${BACKEND_URL}/api/summarize`, {
       method: 'POST',
@@ -131,7 +132,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     })
       .then(async res => {
         if (res.ok) return res.json();
-        const errText = await res.text().catch(() => '');
         return { error: `Server error ${res.status}` };
       })
       .then(data => sendResponse(data))
@@ -139,7 +139,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
 
-  // Focus tab
   if (msg.type === 'FOCUS_TAB') {
     if (msg.tabId) {
       chrome.tabs.get(msg.tabId, (tab) => {
