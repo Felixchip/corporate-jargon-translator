@@ -6,7 +6,6 @@ let isListening = false;
 const seen = new Set();
 let buffer = '';
 let silenceTimer = null;
-const SILENCE_DELAY = 1500;
 
 function startRecognition() {
   if (rec) {
@@ -41,31 +40,31 @@ function startRecognition() {
 
     if (lastFinal) {
       buffer += (buffer ? ' ' : '') + lastFinal;
-    }
 
-    const fullText = (buffer + (latestInterim ? ' ' + latestInterim : '')).trim();
-    const words = fullText.split(/\s+/).filter(Boolean).length;
+      // Only reset timer on NEW final words, never on interims.
+      // This prevents endless timer resets and keeps sentence boundaries clean.
+      const words = buffer.split(/\s+/).filter(Boolean).length;
+      let timeoutMs = 800;
+      if (words >= 10) timeoutMs = 500;
+      else if (words >= 5) timeoutMs = 650;
 
-    let timeoutMs = 1500;
-    if (words >= 15) timeoutMs = 800;
-    else if (words >= 8) timeoutMs = 1200;
-
-    clearTimeout(silenceTimer);
-    silenceTimer = setTimeout(() => {
-      const sentence = buffer.trim();
-      buffer = '';
-      if (sentence && sentence.split(/\s+/).filter(Boolean).length >= 3 && isListening) {
-        const key = sentence.toLowerCase();
-        if (!seen.has(key)) {
-          seen.add(key);
-          if (seen.size > 50) {
-            const first = seen.values().next().value;
-            seen.delete(first);
+      clearTimeout(silenceTimer);
+      silenceTimer = setTimeout(() => {
+        const sentence = buffer.trim();
+        buffer = '';
+        if (sentence && sentence.split(/\s+/).filter(Boolean).length >= 3 && isListening) {
+          const key = sentence.toLowerCase();
+          if (!seen.has(key)) {
+            seen.add(key);
+            if (seen.size > 50) {
+              const first = seen.values().next().value;
+              seen.delete(first);
+            }
+            chrome.runtime.sendMessage({ type: 'TRANSCRIPT', text: sentence });
           }
-          chrome.runtime.sendMessage({ type: 'TRANSCRIPT', text: sentence });
         }
-      }
-    }, timeoutMs);
+      }, timeoutMs);
+    }
   };
 
   rec.onerror = (e) => {
