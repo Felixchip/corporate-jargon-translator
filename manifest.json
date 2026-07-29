@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Cut the BS",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "Real-time corporate jargon translator. Click the icon, speak freely, and watch the BS get decoded — live, on any page.",
 
   "permissions": [
